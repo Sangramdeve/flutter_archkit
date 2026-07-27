@@ -90,6 +90,6 @@ class AndroidFlavorGenerator {
     }
 
     await gradleFile.writeAsString(content);
-    print('✏️  Updated android/app/build.gradle.kts');
+    stdout.writeln('✏️  Updated android/app/build.gradle.kts');
   }
 }

@@ -29,10 +29,7 @@ class VscodeLaunchGenerator {
         'request': 'launch',
         'type': 'dart',
         'program': mainPath,
-        'args': [
-          '--flavor',
-          flavor.name,
-        ],
+        'args': ['--flavor', flavor.name],
       });
 
       // 2. Profile mode configuration
@@ -42,10 +39,7 @@ class VscodeLaunchGenerator {
         'type': 'dart',
         'flutterMode': 'profile',
         'program': mainPath,
-        'args': [
-          '--flavor',
-          flavor.name,
-        ],
+        'args': ['--flavor', flavor.name],
       });
 
       // 3. Release mode configuration
@@ -55,20 +49,14 @@ class VscodeLaunchGenerator {
         'type': 'dart',
         'flutterMode': 'release',
         'program': mainPath,
-        'args': [
-          '--flavor',
-          flavor.name,
-        ],
+        'args': ['--flavor', flavor.name],
       });
     }
 
-    final launchData = {
-      'version': '0.2.0',
-      'configurations': configurations,
-    };
+    final launchData = {'version': '0.2.0', 'configurations': configurations};
 
     final encoder = JsonEncoder.withIndent('  ');
     await launchFile.writeAsString('${encoder.convert(launchData)}\n');
-    print('✏️  Wrote .vscode/launch.json with flavor configurations');
+    stdout.writeln('✏️  Wrote .vscode/launch.json with flavor configurations');
   }
 }

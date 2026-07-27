@@ -21,7 +21,8 @@ class IosXcconfigGenerator {
       for (final config in configs) {
         final file = File('${flavorsDir.path}/$config-${flavor.name}.xcconfig');
 
-        final content = '''
+        final content =
+            '''
 #include "$config.xcconfig"
 
 FLUTTER_TARGET=lib/main_${flavor.name}.dart
@@ -32,7 +33,7 @@ PRODUCT_BUNDLE_IDENTIFIER=\$(BASE_BUNDLE_ID)${flavor.applicationIdSuffix}
 ''';
 
         await file.writeAsString(content);
-        print('Created ${file.path}');
+        stdout.writeln('Created ${file.path}');
       }
     }
 
@@ -44,7 +45,7 @@ PRODUCT_BUNDLE_IDENTIFIER=\$(BASE_BUNDLE_ID)${flavor.applicationIdSuffix}
 // Set your real bundle id prefix here (must match what's in Xcode > Signing).
 BASE_BUNDLE_ID=com.yourcompany.myapp
 ''');
-      print(
+      stdout.writeln(
         '✏️  Wrote ios/Flutter/Flavors/Base.xcconfig (edit BASE_BUNDLE_ID!)',
       );
     }

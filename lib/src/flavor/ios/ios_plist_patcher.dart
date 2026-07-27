@@ -24,7 +24,7 @@ class IosPlistPatcher {
     content = _setOrReplaceKey(content, key: 'BaseURL', value: r'$(BASE_URL)');
 
     await plistFile.writeAsString(content);
-    print(
+    stdout.writeln(
       '✏️  Patched ios/Runner/Info.plist (CFBundleDisplayName, BaseURL '
       'now read from active .xcconfig)',
     );

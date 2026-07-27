@@ -4,7 +4,7 @@ import 'flavor_config.dart';
 import 'flavor_exceptions.dart';
 
 /// Loads flavor definitions from a yaml file (default: flavor.yaml at the
-/// project root) and converts them into a List<FlavorConfig>.
+/// project root) and converts them into a `List<FlavorConfig>`.
 ///
 /// Expected file shape:
 /// ```yaml

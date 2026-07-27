@@ -22,7 +22,7 @@ Future<void> main(List<String> args) async {
   try {
     final flavors = await loader.load();
 
-    print(
+    stdout.writeln(
       '🚀 Loaded ${flavors.length} flavor(s) from $fileName: '
       '${flavors.map((f) => f.name).join(', ')}',
     );

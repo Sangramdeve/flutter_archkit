@@ -79,7 +79,7 @@ class IosSchemeGenerator {
 
           final schemePath = '${schemesDir.path}/${flavor.name}.xcscheme';
           await scheme.saveAs(schemePath);
-          print('Created $schemePath');
+          stdout.writeln('Created $schemePath');
         }
         return;
       } catch (e) {
@@ -195,7 +195,7 @@ class IosSchemeGenerator {
 ''';
 
       await file.writeAsString(content);
-      print('Created ${file.path}');
+      stdout.writeln('Created ${file.path}');
     }
   }
 }

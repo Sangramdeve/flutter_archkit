@@ -1,0 +1,8 @@
+flavors:
+  dev:
+    appName: "Example Dev"
+    applicationIdSuffix: ".dev"
+    baseUrl: "https://dev-api.example.com"
+  prod:
+    appName: "Example"
+    baseUrl: "https://api.example.com"
