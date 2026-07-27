@@ -10,6 +10,8 @@ class ServerConfigGenerator {
   ServerConfigGenerator({required this.flavors, required this.projectRoot});
 
   Future<void> run() async {
+    _validateFlavors();
+
     final configFile = File('$projectRoot/lib/core/config/server_config.dart');
     if (!await configFile.parent.exists()) {
       await configFile.parent.create(recursive: true);
@@ -61,8 +63,7 @@ class ServerConfig {
     final flavor = appFlavor;
 
     if (flavor == null || flavor.isEmpty) {
-      _currentEnv = ServerEnvironment.$defaultEnum;
-    }$envCases
+      _currentEnv = ServerEnvironment.$defaultEnum;$envCases
     } else {
       _currentEnv = ServerEnvironment.$defaultEnum; // Default fallback
     }
@@ -84,6 +85,40 @@ $baseUrlCases
 
     await configFile.writeAsString(content);
     stdout.writeln('✏️  Wrote lib/core/config/server_config.dart');
+  }
+
+  /// Ensures no two flavors collapse onto the same enum name (e.g. `prod`
+  /// and `production` both mapping to `production`), and that every flavor
+  /// has a non-empty base URL, before we generate invalid Dart.
+  void _validateFlavors() {
+    if (flavors.isEmpty) {
+      throw ArgumentError(
+        'ServerConfigGenerator requires at least one flavor to generate '
+        'server_config.dart.',
+      );
+    }
+
+    final seen = <String, String>{}; // enumName -> original flavor name
+    for (final f in flavors) {
+      final enumName = _toEnumName(f.name);
+
+      final existing = seen[enumName];
+      if (existing != null) {
+        throw ArgumentError(
+          "Flavor '${f.name}' maps to the same enum value '$enumName' as "
+          "flavor '$existing'. Rename one of them so they don't collide "
+          'in the generated ServerEnvironment enum.',
+        );
+      }
+      seen[enumName] = f.name;
+
+      if (f.baseUrl.trim().isEmpty) {
+        throw ArgumentError(
+          "Flavor '${f.name}' has an empty baseUrl. Every flavor needs a "
+          'base URL to generate ServerConfig.baseUrl.',
+        );
+      }
+    }
   }
 
   String _toEnumName(String flavorName) {
