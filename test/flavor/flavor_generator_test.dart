@@ -200,16 +200,7 @@ void main() {
     expect(pbxprojContent, contains('name = "Debug-dev";'));
     expect(pbxprojContent, contains('/* Debug-dev */,'));
 
-    // 9. Verify lib/main_<flavor>.dart creation
-    for (final flavor in flavors) {
-      final mainFile = File('${tempDir.path}/lib/main_${flavor.name}.dart');
-      expect(await mainFile.exists(), isTrue);
-      final mainContent = await mainFile.readAsString();
-      expect(mainContent, contains("import 'main.dart' as app;"));
-      expect(mainContent, contains("app.main();"));
-    }
-
-    // 10. Verify lib/core/config/server_config.dart creation
+    // 9. Verify lib/core/config/server_config.dart creation
     final serverConfigFile = File(
       '${tempDir.path}/lib/core/config/server_config.dart',
     );
@@ -222,12 +213,10 @@ void main() {
     final vscodeLaunchFile = File('${tempDir.path}/.vscode/launch.json');
     expect(await vscodeLaunchFile.exists(), isTrue);
     final vscodeLaunchContent = await vscodeLaunchFile.readAsString();
-    expect(vscodeLaunchContent, contains('"name": "dev (Debug)"'));
-    expect(vscodeLaunchContent, contains('"program": "lib/main_dev.dart"'));
-    expect(
-      vscodeLaunchContent,
-      contains('"args": [\n        "--flavor",\n        "dev"\n      ]'),
-    );
+    expect(vscodeLaunchContent, contains('"name": "dev"'));
+    expect(vscodeLaunchContent, contains('"name": "prod"'));
+    expect(vscodeLaunchContent, contains('"request": "launch"'));
+    expect(vscodeLaunchContent, contains('"type": "dart"'));
   });
 
   test(

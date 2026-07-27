@@ -10,7 +10,6 @@ import 'parser/flavor_config.dart';
 /// - `android/app/build.gradle.kts`
 /// - `ios/Runner/Info.plist`
 /// - `lib/core/config/server_config.dart` configuration
-/// - `lib/main_<flavor>.dart` entry points
 /// - `.vscode/launch.json` configurations
 class FlavorGenerator {
   final List<FlavorConfig> flavors;
@@ -40,8 +39,8 @@ class FlavorGenerator {
     );
     await serverConfigGen.run();
 
-    // 4. Generate Dart main entry points
-    await _generateMainEntryPoints();
+    // 4. Update Dart main entry point
+    await _updateMainEntryPoint();
 
     // 5. Generate VS Code launch configurations
     final vscodeGen = VscodeLaunchGenerator(
@@ -56,21 +55,9 @@ class FlavorGenerator {
   }
 
   // ---------------------------------------------------------------------
-  // lib/main_<flavor>.dart entry points
+  // lib/main.dart entry point update
   // ---------------------------------------------------------------------
-  Future<void> _generateMainEntryPoints() async {
-    for (final flavor in flavors) {
-      final flavorMainFile = File('$projectRoot/lib/main_${flavor.name}.dart');
-      final flavorMainContent = '''import 'main.dart' as app;
-
-void main() {
-  app.main();
-}
-''';
-      await flavorMainFile.writeAsString(flavorMainContent);
-      stdout.writeln('✏️  Wrote lib/main_${flavor.name}.dart');
-    }
-
+  Future<void> _updateMainEntryPoint() async {
     final mainFile = File('$projectRoot/lib/main.dart');
     if (await mainFile.exists()) {
       var content = await mainFile.readAsString();

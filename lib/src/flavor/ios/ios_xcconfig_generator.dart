@@ -25,7 +25,7 @@ class IosXcconfigGenerator {
             '''
 #include "$config.xcconfig"
 
-FLUTTER_TARGET=lib/main_${flavor.name}.dart
+FLUTTER_TARGET=lib/main.dart
 APP_NAME=${flavor.appName}
 BASE_URL=${flavor.baseUrl}
 BUNDLE_SUFFIX=${flavor.applicationIdSuffix}
