@@ -74,7 +74,7 @@ class CreateCommand extends Command<int> {
     // 3. Select State Management
     final smOption = argResults?['state-management'] as String?;
     String stateManagement;
-    final smChoices = const ['Bloc', 'Riverpod', 'Provider', 'GetX'];
+    final smChoices = const ['Bloc', 'Cubit', 'Riverpod', 'Provider', 'GetX'];
     if (smOption != null &&
         smChoices
             .map((e) => e.toLowerCase())

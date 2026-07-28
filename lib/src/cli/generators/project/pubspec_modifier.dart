@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 class PubspecModifier {
-  Future<void> addDependencies(String projectPath, String stateManagement) async {
+  Future<void> addDependencies(
+    String projectPath,
+    String stateManagement,
+  ) async {
     final pubspecFile = File(p.join(projectPath, 'pubspec.yaml'));
     if (!pubspecFile.existsSync()) return;
 
@@ -11,6 +14,7 @@ class PubspecModifier {
 
     switch (stateManagement.toLowerCase()) {
       case 'bloc':
+      case 'cubit':
         depsMap['flutter_bloc'] = '^8.1.3';
         depsMap['equatable'] = '^2.0.5';
         break;
