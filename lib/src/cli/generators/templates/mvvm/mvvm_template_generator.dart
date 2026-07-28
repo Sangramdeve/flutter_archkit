@@ -9,73 +9,76 @@ import 'getx/mvvm_getx_template.dart';
 
 class MvvmTemplateGenerator extends TemplateGenerator {
   @override
-  Future<void> generate(ProjectConfig config, String projectPath) async {
+  Future<void> generate(ProjectConfig config, String projectPath, {String featureName = 'home'}) async {
+    final snake = featureName.toLowerCase();
+    final pascal = featureName.toPascalCase();
     final lib = p.join(projectPath, 'lib');
+    final targetDir = featureName == 'home' ? lib : p.join(lib, 'features', snake);
     final sm = config.stateManagement.toLowerCase();
 
     // Models
     writeFile(
-      p.join(lib, 'models', 'home_model.dart'),
+      p.join(targetDir, 'models', '${snake}_model.dart'),
       '''
-class HomeModel {
+class ${pascal}Model {
   final String title;
 
-  const HomeModel({required this.title});
+  const ${pascal}Model({required this.title});
 }
 ''',
     );
 
     // Services
     writeFile(
-      p.join(lib, 'services', 'home_service.dart'),
+      p.join(targetDir, 'services', '${snake}_service.dart'),
       '''
-class HomeService {
+class ${pascal}Service {
   Future<String> fetchData() async {
-    return 'Data from HomeService';
+    return 'Data from ${pascal}Service';
   }
 }
 ''',
     );
 
-    // ViewModels (State Management)
+    // ViewModels
     switch (sm) {
       case 'bloc':
-        MvvmBlocTemplate.generate(this, lib);
+        MvvmBlocTemplate.generate(this, targetDir);
         break;
       case 'cubit':
-        MvvmCubitTemplate.generate(this, lib);
+        MvvmCubitTemplate.generate(this, targetDir);
         break;
       case 'riverpod':
-        MvvmRiverpodTemplate.generate(this, lib);
+        MvvmRiverpodTemplate.generate(this, targetDir);
         break;
       case 'provider':
-        MvvmProviderTemplate.generate(this, lib);
+        MvvmProviderTemplate.generate(this, targetDir);
         break;
       case 'getx':
       case 'get':
-        MvvmGetXTemplate.generate(this, lib);
+        MvvmGetXTemplate.generate(this, targetDir);
         break;
       default:
-        MvvmProviderTemplate.generate(this, lib);
+        MvvmProviderTemplate.generate(this, targetDir);
     }
 
     // Views
     writeFile(
-      p.join(lib, 'views', 'home_view.dart'),
+      p.join(targetDir, 'views', '${snake}_view.dart'),
       '''
 import 'package:flutter/material.dart';
 
-class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+class ${pascal}View extends StatelessWidget {
+  const ${pascal}View({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MVVM Home View'),
+        title: Text('MVVM $pascal View'),
       ),
-      body: const Center(
-        child: Text('MVVM Architecture Screen'),
+      body: Center(
+        child: Text('MVVM $pascal Screen'),
       ),
     );
   }

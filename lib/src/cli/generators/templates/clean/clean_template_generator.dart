@@ -9,44 +9,46 @@ import 'getx/clean_getx_template.dart';
 
 class CleanTemplateGenerator extends TemplateGenerator {
   @override
-  Future<void> generate(ProjectConfig config, String projectPath) async {
-    final base = p.join(projectPath, 'lib', 'features', 'home');
+  Future<void> generate(ProjectConfig config, String projectPath, {String featureName = 'home'}) async {
+    final snake = featureName.toLowerCase();
+    final pascal = featureName.toPascalCase();
+    final base = p.join(projectPath, 'lib', 'features', snake);
     final sm = config.stateManagement.toLowerCase();
 
     // Data layer
     writeFile(
-      p.join(base, 'data', 'data_sources', 'home_remote_datasource.dart'),
+      p.join(base, 'data', 'data_sources', '${snake}_remote_datasource.dart'),
       '''
-abstract class HomeRemoteDataSource {
-  Future<String> getHomeData();
+abstract class ${pascal}RemoteDataSource {
+  Future<String> get${pascal}Data();
 }
 ''',
     );
 
     writeFile(
-      p.join(base, 'data', 'data_sources', 'home_remote_datasource_impl.dart'),
+      p.join(base, 'data', 'data_sources', '${snake}_remote_datasource_impl.dart'),
       '''
-import 'home_remote_datasource.dart';
+import '${snake}_remote_datasource.dart';
 
-class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
+class ${pascal}RemoteDataSourceImpl implements ${pascal}RemoteDataSource {
   @override
-  Future<String> getHomeData() async {
-    return 'Data loaded from HomeRemoteDataSource';
+  Future<String> get${pascal}Data() async {
+    return 'Data loaded from ${pascal}RemoteDataSource';
   }
 }
 ''',
     );
 
     writeFile(
-      p.join(base, 'data', 'models', 'home_model.dart'),
+      p.join(base, 'data', 'models', '${snake}_model.dart'),
       '''
-class HomeModel {
+class ${pascal}Model {
   final String title;
 
-  const HomeModel({required this.title});
+  const ${pascal}Model({required this.title});
 
-  factory HomeModel.fromJson(Map<String, dynamic> json) {
-    return HomeModel(title: json['title'] ?? '');
+  factory ${pascal}Model.fromJson(Map<String, dynamic> json) {
+    return ${pascal}Model(title: json['title'] ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -57,19 +59,19 @@ class HomeModel {
     );
 
     writeFile(
-      p.join(base, 'data', 'repositories', 'home_repository_impl.dart'),
+      p.join(base, 'data', 'repositories', '${snake}_repository_impl.dart'),
       '''
-import '../../domain/repositories/home_repository.dart';
-import '../data_sources/home_remote_datasource.dart';
+import '../../domain/repositories/${snake}_repository.dart';
+import '../data_sources/${snake}_remote_datasource.dart';
 
-class HomeRepositoryImpl implements HomeRepository {
-  final HomeRemoteDataSource remoteDataSource;
+class ${pascal}RepositoryImpl implements ${pascal}Repository {
+  final ${pascal}RemoteDataSource remoteDataSource;
 
-  HomeRepositoryImpl({required this.remoteDataSource});
+  ${pascal}RepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<String> getHomeData() async {
-    return await remoteDataSource.getHomeData();
+  Future<String> get${pascal}Data() async {
+    return await remoteDataSource.get${pascal}Data();
   }
 }
 ''',
@@ -77,53 +79,53 @@ class HomeRepositoryImpl implements HomeRepository {
 
     // DI layer
     writeFile(
-      p.join(base, 'di', 'home_di.dart'),
+      p.join(base, 'di', '${snake}_di.dart'),
       '''
-import '../data/data_sources/home_remote_datasource.dart';
-import '../data/data_sources/home_remote_datasource_impl.dart';
-import '../data/repositories/home_repository_impl.dart';
-import '../domain/repositories/home_repository.dart';
-import '../domain/usecases/home_usecase.dart';
+import '../data/data_sources/${snake}_remote_datasource.dart';
+import '../data/data_sources/${snake}_remote_datasource_impl.dart';
+import '../data/repositories/${snake}_repository_impl.dart';
+import '../domain/repositories/${snake}_repository.dart';
+import '../domain/usecases/${snake}_usecase.dart';
 
-class HomeDI {
-  static HomeUseCase provideHomeUseCase() {
-    final remoteDataSource = HomeRemoteDataSourceImpl();
-    final repository = HomeRepositoryImpl(remoteDataSource: remoteDataSource);
-    return HomeUseCase(repository: repository);
+class ${pascal}DI {
+  static ${pascal}UseCase provide${pascal}UseCase() {
+    final remoteDataSource = ${pascal}RemoteDataSourceImpl();
+    final repository = ${pascal}RepositoryImpl(remoteDataSource: remoteDataSource);
+    return ${pascal}UseCase(repository: repository);
   }
 }
 ''',
     );
 
     writeFile(
-      p.join(base, 'di', 'home_di.config.dart'),
+      p.join(base, 'di', '${snake}_di.config.dart'),
       '''
-// Auto-generated or manual DI configuration file for Home feature
+// Auto-generated or manual DI configuration file for $pascal feature
 ''',
     );
 
     // Domain layer
     writeFile(
-      p.join(base, 'domain', 'repositories', 'home_repository.dart'),
+      p.join(base, 'domain', 'repositories', '${snake}_repository.dart'),
       '''
-abstract class HomeRepository {
-  Future<String> getHomeData();
+abstract class ${pascal}Repository {
+  Future<String> get${pascal}Data();
 }
 ''',
     );
 
     writeFile(
-      p.join(base, 'domain', 'usecases', 'home_usecase.dart'),
+      p.join(base, 'domain', 'usecases', '${snake}_usecase.dart'),
       '''
-import '../repositories/home_repository.dart';
+import '../repositories/${snake}_repository.dart';
 
-class HomeUseCase {
-  final HomeRepository repository;
+class ${pascal}UseCase {
+  final ${pascal}Repository repository;
 
-  HomeUseCase({required this.repository});
+  ${pascal}UseCase({required this.repository});
 
   Future<String> call() async {
-    return await repository.getHomeData();
+    return await repository.get${pascal}Data();
   }
 }
 ''',
@@ -132,42 +134,42 @@ class HomeUseCase {
     // Presentation layer (State Management)
     switch (sm) {
       case 'bloc':
-        CleanBlocTemplate.generate(this, base);
+        CleanBlocTemplate.generate(this, base, featureName);
         break;
       case 'cubit':
-        CleanCubitTemplate.generate(this, base);
+        CleanCubitTemplate.generate(this, base, featureName);
         break;
       case 'riverpod':
-        CleanRiverpodTemplate.generate(this, base);
+        CleanRiverpodTemplate.generate(this, base, featureName);
         break;
       case 'provider':
-        CleanProviderTemplate.generate(this, base);
+        CleanProviderTemplate.generate(this, base, featureName);
         break;
       case 'getx':
       case 'get':
-        CleanGetXTemplate.generate(this, base);
+        CleanGetXTemplate.generate(this, base, featureName);
         break;
       default:
-        CleanBlocTemplate.generate(this, base);
+        CleanBlocTemplate.generate(this, base, featureName);
     }
 
     // Page view
     writeFile(
-      p.join(base, 'presentation', 'page', 'home_page.dart'),
+      p.join(base, 'presentation', 'page', '${snake}_page.dart'),
       '''
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class ${pascal}Page extends StatelessWidget {
+  const ${pascal}Page({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clean Architecture Home'),
+        title: Text('Clean Architecture $pascal'),
       ),
-      body: const Center(
-        child: Text('Home Page View'),
+      body: Center(
+        child: Text('$pascal Page View'),
       ),
     );
   }

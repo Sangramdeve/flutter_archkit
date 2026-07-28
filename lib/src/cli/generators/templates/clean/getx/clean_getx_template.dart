@@ -2,23 +2,26 @@ import 'package:path/path.dart' as p;
 import '../../template_generator.dart';
 
 class CleanGetXTemplate {
-  static void generate(TemplateGenerator generator, String basePath) {
+  static void generate(TemplateGenerator generator, String basePath, String featureName) {
+    final snake = featureName.toLowerCase();
+    final pascal = featureName.toPascalCase();
+
     generator.writeFile(
-      p.join(basePath, 'presentation', 'controllers', 'home_controller.dart'),
+      p.join(basePath, 'presentation', 'controllers', '${snake}_controller.dart'),
       '''
 import 'package:get/get.dart';
-import '../../domain/usecases/home_usecase.dart';
+import '../../domain/usecases/${snake}_usecase.dart';
 
-class HomeController extends GetxController {
-  final HomeUseCase homeUseCase;
+class ${pascal}Controller extends GetxController {
+  final ${pascal}UseCase ${featureName}UseCase;
   var data = ''.obs;
   var isLoading = false.obs;
 
-  HomeController({required this.homeUseCase});
+  ${pascal}Controller({required this.${featureName}UseCase});
 
   Future<void> loadData() async {
     isLoading.value = true;
-    data.value = await homeUseCase();
+    data.value = await ${featureName}UseCase();
     isLoading.value = false;
   }
 }

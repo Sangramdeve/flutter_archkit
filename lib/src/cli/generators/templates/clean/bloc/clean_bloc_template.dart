@@ -2,46 +2,49 @@ import 'package:path/path.dart' as p;
 import '../../template_generator.dart';
 
 class CleanBlocTemplate {
-  static void generate(TemplateGenerator generator, String basePath) {
-    generator.writeFile(
-      p.join(basePath, 'presentation', 'bloc', 'home_event.dart'),
-      '''
-abstract class HomeEvent {}
+  static void generate(TemplateGenerator generator, String basePath, String featureName) {
+    final pascal = featureName.toPascalCase();
+    final snake = featureName.toLowerCase();
 
-class LoadHomeDataEvent extends HomeEvent {}
+    generator.writeFile(
+      p.join(basePath, 'presentation', 'bloc', '${snake}_event.dart'),
+      '''
+abstract class ${pascal}Event {}
+
+class Load${pascal}DataEvent extends ${pascal}Event {}
 ''',
     );
 
     generator.writeFile(
-      p.join(basePath, 'presentation', 'bloc', 'home_state.dart'),
+      p.join(basePath, 'presentation', 'bloc', '${snake}_state.dart'),
       '''
-abstract class HomeState {}
+abstract class ${pascal}State {}
 
-class HomeInitial extends HomeState {}
-class HomeLoading extends HomeState {}
-class HomeLoaded extends HomeState {
+class ${pascal}Initial extends ${pascal}State {}
+class ${pascal}Loading extends ${pascal}State {}
+class ${pascal}Loaded extends ${pascal}State {
   final String data;
-  HomeLoaded(this.data);
+  ${pascal}Loaded(this.data);
 }
 ''',
     );
 
     generator.writeFile(
-      p.join(basePath, 'presentation', 'bloc', 'home_bloc.dart'),
+      p.join(basePath, 'presentation', 'bloc', '${snake}_bloc.dart'),
       '''
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/usecases/home_usecase.dart';
-import 'home_event.dart';
-import 'home_state.dart';
+import '../../domain/usecases/${snake}_usecase.dart';
+import '${snake}_event.dart';
+import '${snake}_state.dart';
 
-class HomeBloc extends Bloc<HomeEvent, HomeState> {
-  final HomeUseCase homeUseCase;
+class ${pascal}Bloc extends Bloc<${pascal}Event, ${pascal}State> {
+  final ${pascal}UseCase ${featureName}UseCase;
 
-  HomeBloc({required this.homeUseCase}) : super(HomeInitial()) {
-    on<LoadHomeDataEvent>((event, emit) async {
-      emit(HomeLoading());
-      final result = await homeUseCase();
-      emit(HomeLoaded(result));
+  ${pascal}Bloc({required this.${featureName}UseCase}) : super(${pascal}Initial()) {
+    on<Load${pascal}DataEvent>((event, emit) async {
+      emit(${pascal}Loading());
+      final result = await ${featureName}UseCase();
+      emit(${pascal}Loaded(result));
     });
   }
 }

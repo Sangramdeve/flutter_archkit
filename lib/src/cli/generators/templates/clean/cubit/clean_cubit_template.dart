@@ -2,37 +2,40 @@ import 'package:path/path.dart' as p;
 import '../../template_generator.dart';
 
 class CleanCubitTemplate {
-  static void generate(TemplateGenerator generator, String basePath) {
-    generator.writeFile(
-      p.join(basePath, 'presentation', 'cubit', 'home_state.dart'),
-      '''
-abstract class HomeState {}
+  static void generate(TemplateGenerator generator, String basePath, String featureName) {
+    final pascal = featureName.toPascalCase();
+    final snake = featureName.toLowerCase();
 
-class HomeInitial extends HomeState {}
-class HomeLoading extends HomeState {}
-class HomeLoaded extends HomeState {
+    generator.writeFile(
+      p.join(basePath, 'presentation', 'cubit', '${snake}_state.dart'),
+      '''
+abstract class ${pascal}State {}
+
+class ${pascal}Initial extends ${pascal}State {}
+class ${pascal}Loading extends ${pascal}State {}
+class ${pascal}Loaded extends ${pascal}State {
   final String data;
-  HomeLoaded(this.data);
+  ${pascal}Loaded(this.data);
 }
 ''',
     );
 
     generator.writeFile(
-      p.join(basePath, 'presentation', 'cubit', 'home_cubit.dart'),
+      p.join(basePath, 'presentation', 'cubit', '${snake}_cubit.dart'),
       '''
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/usecases/home_usecase.dart';
-import 'home_state.dart';
+import '../../domain/usecases/${snake}_usecase.dart';
+import '${snake}_state.dart';
 
-class HomeCubit extends Cubit<HomeState> {
-  final HomeUseCase homeUseCase;
+class ${pascal}Cubit extends Cubit<${pascal}State> {
+  final ${pascal}UseCase ${featureName}UseCase;
 
-  HomeCubit({required this.homeUseCase}) : super(HomeInitial());
+  ${pascal}Cubit({required this.${featureName}UseCase}) : super(${pascal}Initial());
 
   Future<void> loadData() async {
-    emit(HomeLoading());
-    final result = await homeUseCase();
-    emit(HomeLoaded(result));
+    emit(${pascal}Loading());
+    final result = await ${featureName}UseCase();
+    emit(${pascal}Loaded(result));
   }
 }
 ''',

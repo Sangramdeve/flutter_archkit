@@ -9,61 +9,64 @@ import 'getx/mvc_getx_template.dart';
 
 class MvcTemplateGenerator extends TemplateGenerator {
   @override
-  Future<void> generate(ProjectConfig config, String projectPath) async {
+  Future<void> generate(ProjectConfig config, String projectPath, {String featureName = 'home'}) async {
+    final snake = featureName.toLowerCase();
+    final pascal = featureName.toPascalCase();
     final lib = p.join(projectPath, 'lib');
+    final targetDir = featureName == 'home' ? lib : p.join(lib, 'features', snake);
     final sm = config.stateManagement.toLowerCase();
 
     // Models
     writeFile(
-      p.join(lib, 'models', 'home_model.dart'),
+      p.join(targetDir, 'models', '${snake}_model.dart'),
       '''
-class HomeModel {
+class ${pascal}Model {
   final String title;
 
-  const HomeModel({required this.title});
+  const ${pascal}Model({required this.title});
 }
 ''',
     );
 
-    // Controllers (State Management)
+    // Controllers
     switch (sm) {
       case 'bloc':
-        MvcBlocTemplate.generate(this, lib);
+        MvcBlocTemplate.generate(this, targetDir);
         break;
       case 'cubit':
-        MvcCubitTemplate.generate(this, lib);
+        MvcCubitTemplate.generate(this, targetDir);
         break;
       case 'riverpod':
-        MvcRiverpodTemplate.generate(this, lib);
+        MvcRiverpodTemplate.generate(this, targetDir);
         break;
       case 'provider':
-        MvcProviderTemplate.generate(this, lib);
+        MvcProviderTemplate.generate(this, targetDir);
         break;
       case 'getx':
       case 'get':
-        MvcGetXTemplate.generate(this, lib);
+        MvcGetXTemplate.generate(this, targetDir);
         break;
       default:
-        MvcProviderTemplate.generate(this, lib);
+        MvcProviderTemplate.generate(this, targetDir);
     }
 
     // Views
     writeFile(
-      p.join(lib, 'views', 'home_view.dart'),
+      p.join(targetDir, 'views', '${snake}_view.dart'),
       '''
 import 'package:flutter/material.dart';
 
-class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+class ${pascal}View extends StatelessWidget {
+  const ${pascal}View({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MVC Home View'),
+        title: Text('MVC $pascal View'),
       ),
-      body: const Center(
-        child: Text('MVC Architecture Screen'),
+      body: Center(
+        child: Text('MVC $pascal Screen'),
       ),
     );
   }
