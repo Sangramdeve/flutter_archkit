@@ -9,9 +9,6 @@ topics:
   - architecture
   - clean-architecture
   - mvvm
-  - generator
-  - android
-  - ios
   - flavor
 
 environment:
