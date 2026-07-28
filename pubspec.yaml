@@ -17,6 +17,7 @@ environment:
 
 executables:
   setup_flavor: setup_flavor
+  archkit:
 
 dependencies:
   flutter:
@@ -25,6 +26,9 @@ dependencies:
   path: ^1.9.0
   yaml: ^3.1.2
   dart_xcodeproj: ^0.3.0
+  args: ^2.7.0
+  interact: ^2.2.0
+  mason_logger: ^0.3.5
 
 dev_dependencies:
   flutter_test:
