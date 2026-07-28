@@ -1,9 +1,13 @@
 ## 0.0.1
 
 * Initial release of `flutter_archkit`.
-* Automated multi-flavor generator for Flutter applications.
-* Configures Android product flavors (`build.gradle.kts`).
-* Generates iOS `.xcconfig` build configurations, shared `.xcscheme` schemes, patches `Info.plist`, and updates `project.pbxproj`.
-* Generates Dart `ServerConfig` (`lib/core/config/server_config.dart`) and main entry points (`lib/main_<flavor>.dart`).
-* Generates VS Code debug launch configurations (`.vscode/launch.json`).
-* CLI tool support via `dart run flutter_archkit:setup_flavor`.
+* Interactive project generator (`archkit create`) supporting Clean, MVVM, and MVC architectures.
+* Integrated state management templates for Bloc, Cubit, Riverpod, Provider, and GetX.
+* Feature module generator (`archkit feature <name>` / `archkit -f <name>`) for dynamic feature scaffolding.
+* Automatic project architecture detection via `.metadata` configuration persistence.
+* Modular template engine architecture (`lib/src/cli/generators/templates/`).
+* Automated multi-flavor generator for Flutter applications (`setup_flavor`).
+* Multi-flavor Android Gradle configuration (`build.gradle.kts`).
+* iOS `.xcconfig` build configurations, shared `.xcscheme` schemes, `Info.plist` patching, and `project.pbxproj` updates.
+* Dart `ServerConfig` (`lib/core/config/server_config.dart`) and flavor entry points (`lib/main_<flavor>.dart`).
+* VS Code debug launch configurations (`.vscode/launch.json`).

@@ -1,23 +1,26 @@
 name: flutter_archkit
-description: An automated multi-flavor configuration CLI tool and package for Flutter projects (Android, iOS, VS Code launch, and Dart ServerConfig).
-version: 0.0.1
+description: An automated Flutter architecture generator (Clean, MVVM, MVC with Bloc, Cubit, Riverpod, Provider, GetX), feature module generator, and multi-flavor CLI configuration tool.
+version: 0.0.2
 homepage: https://github.com/Sangramdeve/flutter_archkit
 repository: https://github.com/Sangramdeve/flutter_archkit
 issue_tracker: https://github.com/Sangramdeve/flutter_archkit/issues
 topics:
   - flutter
-  - flavor
+  - architecture
+  - clean-architecture
+  - mvvm
   - generator
   - android
   - ios
+  - flavor
 
 environment:
   sdk: ^3.12.2
   flutter: ">=1.17.0"
 
 executables:
+  archkit: archkit
   setup_flavor: setup_flavor
-  archkit:
 
 dependencies:
   flutter:
