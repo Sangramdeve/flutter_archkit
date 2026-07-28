@@ -3,6 +3,7 @@ import 'package:args/command_runner.dart';
 import 'package:interact/interact.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:flutter_archkit/src/models/project_config.dart';
+import 'package:flutter_archkit/src/services/metadata_config_service.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/clean/clean_template_generator.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/mvvm/mvvm_template_generator.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/mvc/mvc_template_generator.dart';
@@ -17,7 +18,10 @@ class CreateFeatureCommand extends Command<int> {
   @override
   String get description => 'Generate a new feature module';
 
-  CreateFeatureCommand() {
+  final MetadataConfigService _metadataConfigService;
+
+  CreateFeatureCommand({MetadataConfigService? metadataConfigService})
+      : _metadataConfigService = metadataConfigService ?? MetadataConfigService() {
     argParser
       ..addOption('name', abbr: 'n', help: 'Feature name (e.g. auth, profile)')
       ..addOption('architecture', help: 'Architecture (Clean, MVVM, MVC)')
@@ -50,6 +54,9 @@ class CreateFeatureCommand extends Command<int> {
 
     logger.info('${'Feature Name'.padRight(18)}: $featureName');
 
+    // Attempt to load existing config from .metadata
+    final savedConfig = _metadataConfigService.readConfig(Directory.current.path);
+
     // 2. Architecture
     final archOption = argResults?['architecture'] as String?;
     String architecture;
@@ -59,6 +66,9 @@ class CreateFeatureCommand extends Command<int> {
       architecture = archChoices.firstWhere(
         (e) => e.toLowerCase() == archOption.toLowerCase(),
       );
+    } else if (savedConfig != null) {
+      architecture = savedConfig.architecture;
+      logger.info('${'Architecture'.padRight(18)}: $architecture (from .metadata)');
     } else {
       final archIndex = Select(
         prompt: 'Select Architecture',
@@ -77,6 +87,9 @@ class CreateFeatureCommand extends Command<int> {
       stateManagement = smChoices.firstWhere(
         (e) => e.toLowerCase() == smOption.toLowerCase(),
       );
+    } else if (savedConfig != null) {
+      stateManagement = savedConfig.stateManagement;
+      logger.info('${'State Management'.padRight(18)}: $stateManagement (from .metadata)');
     } else {
       final smIndex = Select(
         prompt: 'Select State Management',
@@ -85,6 +98,13 @@ class CreateFeatureCommand extends Command<int> {
       ).interact();
       stateManagement = smChoices[smIndex];
     }
+
+    // Save or update .metadata if missing or explicitly overridden
+    _metadataConfigService.writeConfig(
+      Directory.current.path,
+      architecture: architecture,
+      stateManagement: stateManagement,
+    );
 
     final config = ProjectConfig(
       name: featureName,
@@ -114,3 +134,4 @@ class CreateFeatureCommand extends Command<int> {
     return ExitCode.success.code;
   }
 }
+

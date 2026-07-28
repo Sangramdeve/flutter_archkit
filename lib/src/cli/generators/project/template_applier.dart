@@ -1,11 +1,17 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:flutter_archkit/src/models/project_config.dart';
+import 'package:flutter_archkit/src/services/metadata_config_service.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/clean/clean_template_generator.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/mvvm/mvvm_template_generator.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/mvc/mvc_template_generator.dart';
 
 class TemplateApplier {
+  final MetadataConfigService _metadataConfigService;
+
+  TemplateApplier({MetadataConfigService? metadataConfigService})
+      : _metadataConfigService = metadataConfigService ?? MetadataConfigService();
+
   Future<void> apply(ProjectConfig config, {required String projectPath}) async {
     final libDir = Directory(p.join(projectPath, 'lib'));
     if (!libDir.existsSync()) {
@@ -25,6 +31,12 @@ class TemplateApplier {
     }
 
     _generateMainDart(projectPath, config);
+
+    _metadataConfigService.writeConfig(
+      projectPath,
+      architecture: config.architecture,
+      stateManagement: config.stateManagement,
+    );
   }
 
   void _generateMainDart(String projectPath, ProjectConfig config) {
