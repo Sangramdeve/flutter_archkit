@@ -12,8 +12,7 @@ class MvvmTemplateGenerator extends TemplateGenerator {
   Future<void> generate(ProjectConfig config, String projectPath, {String featureName = 'home'}) async {
     final snake = featureName.toLowerCase();
     final pascal = featureName.toPascalCase();
-    final lib = p.join(projectPath, 'lib');
-    final targetDir = featureName == 'home' ? lib : p.join(lib, 'features', snake);
+    final targetDir = p.join(projectPath, 'lib');
     final sm = config.stateManagement.toLowerCase();
 
     // Models
@@ -43,23 +42,23 @@ class ${pascal}Service {
     // ViewModels
     switch (sm) {
       case 'bloc':
-        MvvmBlocTemplate.generate(this, targetDir);
+        MvvmBlocTemplate.generate(this, targetDir, featureName);
         break;
       case 'cubit':
-        MvvmCubitTemplate.generate(this, targetDir);
+        MvvmCubitTemplate.generate(this, targetDir, featureName);
         break;
       case 'riverpod':
-        MvvmRiverpodTemplate.generate(this, targetDir);
+        MvvmRiverpodTemplate.generate(this, targetDir, featureName);
         break;
       case 'provider':
-        MvvmProviderTemplate.generate(this, targetDir);
+        MvvmProviderTemplate.generate(this, targetDir, featureName);
         break;
       case 'getx':
       case 'get':
-        MvvmGetXTemplate.generate(this, targetDir);
+        MvvmGetXTemplate.generate(this, targetDir, featureName);
         break;
       default:
-        MvvmProviderTemplate.generate(this, targetDir);
+        MvvmProviderTemplate.generate(this, targetDir, featureName);
     }
 
     // Views

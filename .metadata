@@ -8,3 +8,6 @@ version:
   channel: "stable"
 
 project_type: package
+archkit:
+  architecture: MVVM
+  state_management: Riverpod

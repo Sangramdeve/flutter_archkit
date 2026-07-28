@@ -12,8 +12,7 @@ class MvcTemplateGenerator extends TemplateGenerator {
   Future<void> generate(ProjectConfig config, String projectPath, {String featureName = 'home'}) async {
     final snake = featureName.toLowerCase();
     final pascal = featureName.toPascalCase();
-    final lib = p.join(projectPath, 'lib');
-    final targetDir = featureName == 'home' ? lib : p.join(lib, 'features', snake);
+    final targetDir = p.join(projectPath, 'lib');
     final sm = config.stateManagement.toLowerCase();
 
     // Models
@@ -31,23 +30,23 @@ class ${pascal}Model {
     // Controllers
     switch (sm) {
       case 'bloc':
-        MvcBlocTemplate.generate(this, targetDir);
+        MvcBlocTemplate.generate(this, targetDir, featureName);
         break;
       case 'cubit':
-        MvcCubitTemplate.generate(this, targetDir);
+        MvcCubitTemplate.generate(this, targetDir, featureName);
         break;
       case 'riverpod':
-        MvcRiverpodTemplate.generate(this, targetDir);
+        MvcRiverpodTemplate.generate(this, targetDir, featureName);
         break;
       case 'provider':
-        MvcProviderTemplate.generate(this, targetDir);
+        MvcProviderTemplate.generate(this, targetDir, featureName);
         break;
       case 'getx':
       case 'get':
-        MvcGetXTemplate.generate(this, targetDir);
+        MvcGetXTemplate.generate(this, targetDir, featureName);
         break;
       default:
-        MvcProviderTemplate.generate(this, targetDir);
+        MvcProviderTemplate.generate(this, targetDir, featureName);
     }
 
     // Views

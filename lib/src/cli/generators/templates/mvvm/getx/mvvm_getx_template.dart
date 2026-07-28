@@ -2,15 +2,18 @@ import 'package:path/path.dart' as p;
 import '../../template_generator.dart';
 
 class MvvmGetXTemplate {
-  static void generate(TemplateGenerator generator, String libPath) {
+  static void generate(TemplateGenerator generator, String libPath, String featureName) {
+    final snake = featureName.toLowerCase();
+    final pascal = featureName.toPascalCase();
+
     generator.writeFile(
-      p.join(libPath, 'viewmodels', 'home_controller.dart'),
+      p.join(libPath, 'viewmodels', '${snake}_controller.dart'),
       '''
 import 'package:get/get.dart';
-import '../services/home_service.dart';
+import '../services/${snake}_service.dart';
 
-class HomeController extends GetxController {
-  final HomeService service = HomeService();
+class ${pascal}Controller extends GetxController {
+  final ${pascal}Service service = ${pascal}Service();
   var data = ''.obs;
 
   Future<void> loadData() async {
