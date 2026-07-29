@@ -32,7 +32,7 @@ Or add it to your project `pubspec.yaml` under `dev_dependencies`:
 
 ```yaml
 dev_dependencies:
-  flutter_archkit: ^0.0.2
+  flutter_archkit: ^0.0.3
 ```
 
 ---
