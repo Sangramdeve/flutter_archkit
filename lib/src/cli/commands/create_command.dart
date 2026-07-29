@@ -16,7 +16,7 @@ class CreateCommand extends Command<int> {
   final ProjectGenerator _projectGenerator;
 
   CreateCommand({ProjectGenerator? projectGenerator})
-    : _projectGenerator = projectGenerator ?? ProjectGenerator() {
+      : _projectGenerator = projectGenerator ?? ProjectGenerator() {
     argParser
       ..addOption('org', help: 'Organization identifier (e.g. com.example)')
       ..addOption('architecture', help: 'Architecture (Clean, MVVM, MVC)')
@@ -119,10 +119,8 @@ class CreateCommand extends Command<int> {
     ];
 
     if (platformOption != null && platformOption.isNotEmpty) {
-      selectedPlatforms = platformOption
-          .split(',')
-          .map((e) => e.trim().toLowerCase())
-          .toList();
+      selectedPlatforms =
+          platformOption.split(',').map((e) => e.trim().toLowerCase()).toList();
     } else {
       final platformIndices = MultiSelect(
         prompt: 'Platforms',
@@ -130,9 +128,8 @@ class CreateCommand extends Command<int> {
         defaults: const [true, true, false, false, false, false],
       ).interact();
 
-      selectedPlatforms = platformIndices
-          .map((i) => platformList[i].toLowerCase())
-          .toList();
+      selectedPlatforms =
+          platformIndices.map((i) => platformList[i].toLowerCase()).toList();
     }
 
     final config = ProjectConfig(
@@ -151,7 +148,10 @@ class CreateCommand extends Command<int> {
     if (created) {
       progress1.complete('Creating Flutter project...');
     } else {
-      progress1.fail('Creating Flutter project...');
+      progress1.fail(
+        'Creating Flutter project failed. Please verify that Flutter or FVM is installed and available in your PATH.',
+      );
+      return ExitCode.cantCreate.code;
     }
 
     // Applying template...

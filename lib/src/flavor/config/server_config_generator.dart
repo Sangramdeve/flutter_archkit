@@ -19,20 +19,19 @@ class ServerConfigGenerator {
 
     final enumValues = flavors.map((f) => _toEnumName(f.name)).join(', ');
 
-    final envCases = flavors
+    final switchCases = flavors
         .map((f) {
           final enumName = _toEnumName(f.name);
-          return '''
-    } else if (flavor == '${f.name}') {
-      _currentEnv = ServerEnvironment.$enumName;''';
+          return '''      case '${f.name}':
+        _currentEnv = ServerEnvironment.$enumName;
+        break;''';
         })
-        .join('');
+        .join('\n');
 
     final baseUrlCases = flavors
         .map((f) {
           final enumName = _toEnumName(f.name);
-          return '''
-      case ServerEnvironment.$enumName:
+          return '''      case ServerEnvironment.$enumName:
         return '${f.baseUrl}';''';
         })
         .join('\n');
@@ -62,10 +61,10 @@ class ServerConfig {
   Future<void> init() async {
     final flavor = appFlavor;
 
-    if (flavor == null || flavor.isEmpty) {
-      _currentEnv = ServerEnvironment.$defaultEnum;$envCases
-    } else {
-      _currentEnv = ServerEnvironment.$defaultEnum; // Default fallback
+    switch (flavor) {
+$switchCases
+      default:
+        _currentEnv = ServerEnvironment.$defaultEnum;
     }
 
     log(
@@ -125,6 +124,10 @@ $baseUrlCases
     if (flavorName == 'prod' || flavorName == 'production') {
       return 'production';
     }
-    return flavorName;
+    final sanitized = flavorName.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+    if (RegExp(r'^[0-9]').hasMatch(sanitized)) {
+      return 'flavor_$sanitized';
+    }
+    return sanitized;
   }
 }

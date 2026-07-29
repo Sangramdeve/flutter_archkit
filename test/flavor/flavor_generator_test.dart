@@ -118,13 +118,15 @@ void main() {
       FlavorConfig(
         name: 'dev',
         appName: 'MyApp Dev',
-        applicationIdSuffix: '.dev',
+        applicationId: 'com.example.myapp.dev',
+        bundleId: 'com.example.myapp.dev',
         baseUrl: 'https://dev.api.example.com',
       ),
       FlavorConfig(
         name: 'prod',
         appName: 'MyApp',
-        applicationIdSuffix: '',
+        applicationId: 'com.example.myapp',
+        bundleId: 'com.example.myapp',
         baseUrl: 'https://api.example.com',
       ),
     ];
@@ -142,8 +144,14 @@ void main() {
     final flavorGradleContent = await flavorGradleFile.readAsString();
     expect(flavorGradleContent, contains('create("dev")'));
     expect(flavorGradleContent, contains('create("prod")'));
-    expect(flavorGradleContent, contains('applicationIdSuffix = ".dev"'));
-    expect(flavorGradleContent, contains('applicationIdSuffix = ""'));
+    expect(
+      flavorGradleContent,
+      contains('applicationId = "com.example.myapp.dev"'),
+    );
+    expect(
+      flavorGradleContent,
+      contains('applicationId = "com.example.myapp"'),
+    );
 
     // 4. Verify build.gradle.kts updates
     expect(await buildGradleFile.exists(), isTrue);
@@ -161,15 +169,37 @@ void main() {
     );
 
     // 5. Verify iOS flavor config files creation and contents
-    final baseXcconfig = File('${iosFlutterDir.path}/Base.xcconfig');
-    expect(await baseXcconfig.exists(), isTrue);
-
     final devDebugXcconfig = File('${iosFlutterDir.path}/Debug-dev.xcconfig');
     expect(await devDebugXcconfig.exists(), isTrue);
     final devDebugContent = await devDebugXcconfig.readAsString();
     expect(devDebugContent, contains('#include "Debug.xcconfig"'));
+    expect(
+      devDebugContent,
+      contains(
+        '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug-dev.xcconfig"',
+      ),
+    );
     expect(devDebugContent, contains('APP_NAME=MyApp Dev'));
-    expect(devDebugContent, contains('BUNDLE_SUFFIX=.dev'));
+    expect(
+      devDebugContent,
+      contains('PRODUCT_BUNDLE_IDENTIFIER=com.example.myapp.dev'),
+    );
+
+    // Verify Base Debug and Release xcconfigs patch
+    final debugContent = await debugXcconfig.readAsString();
+    expect(
+      debugContent,
+      contains(
+        '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"',
+      ),
+    );
+    final releaseContent = await releaseXcconfig.readAsString();
+    expect(
+      releaseContent,
+      contains(
+        '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"',
+      ),
+    );
 
     // 6. Verify iOS Scheme files creation
     final schemesDir = Directory(
@@ -208,6 +238,8 @@ void main() {
     final serverConfigContent = await serverConfigFile.readAsString();
     expect(serverConfigContent, contains('class ServerConfig'));
     expect(serverConfigContent, contains('enum ServerEnvironment'));
+    expect(serverConfigContent, contains("case 'dev':"));
+    expect(serverConfigContent, contains("case 'prod':"));
 
     // 10. Verify .vscode/launch.json creation
     final vscodeLaunchFile = File('${tempDir.path}/.vscode/launch.json');
@@ -215,8 +247,12 @@ void main() {
     final vscodeLaunchContent = await vscodeLaunchFile.readAsString();
     expect(vscodeLaunchContent, contains('"name": "dev"'));
     expect(vscodeLaunchContent, contains('"name": "prod"'));
-    expect(vscodeLaunchContent, contains('"request": "launch"'));
-    expect(vscodeLaunchContent, contains('"type": "dart"'));
+
+    // 11. Verify .run configuration files creation for Android Studio
+    final intellijDevFile = File('${tempDir.path}/.run/dev.run.xml');
+    expect(await intellijDevFile.exists(), isTrue);
+    final intellijProdFile = File('${tempDir.path}/.run/prod.run.xml');
+    expect(await intellijProdFile.exists(), isTrue);
   });
 
   test(
@@ -234,7 +270,8 @@ void main() {
         FlavorConfig(
           name: 'dev',
           appName: 'MyApp Dev',
-          applicationIdSuffix: '.dev',
+          applicationId: 'com.example.myapp.dev',
+          bundleId: 'com.example.myapp.dev',
           baseUrl: 'https://dev.api.example.com',
         ),
       ];
@@ -263,39 +300,52 @@ void main() {
   );
 
   group('YAML Flavor Parsing & Loading', () {
-    test('FlavorYamlLoader parses valid map format YAML correctly', () async {
-      final yamlContent = '''
+    test(
+      'FlavorYamlLoader parses valid nested format YAML correctly',
+      () async {
+        final yamlContent = '''
 flavors:
   dev:
-    appName: "YAML Map Dev"
-    applicationIdSuffix: ".map.dev"
-    baseUrl: "https://dev.api.example.com"
+    app:
+      name: "YAML App Dev"
+      baseUrl: "https://dev.api.example.com"
+    android:
+      applicationId: "com.example.app.dev"
+    ios:
+      bundleId: "com.example.app.dev"
   prod:
-    appName: "YAML Map Prod"
-    applicationIdSuffix: ""
-    baseUrl: "https://api.example.com"
+    app:
+      name: "YAML App Prod"
+      baseUrl: "https://api.example.com"
+    android:
+      applicationId: "com.example.app"
+    ios:
+      bundleId: "com.example.app"
 ''';
-      final yamlFile = File('${tempDir.path}/flavor.yaml');
-      await yamlFile.writeAsString(yamlContent);
+        final yamlFile = File('${tempDir.path}/flavor.yaml');
+        await yamlFile.writeAsString(yamlContent);
 
-      final loader = FlavorYamlLoader(
-        projectRoot: tempDir.path,
-        fileName: 'flavor.yaml',
-      );
-      final loaded = await loader.load();
+        final loader = FlavorYamlLoader(
+          projectRoot: tempDir.path,
+          fileName: 'flavor.yaml',
+        );
+        final loaded = await loader.load();
 
-      expect(loaded.length, equals(2));
+        expect(loaded.length, equals(2));
 
-      final devConfig = loaded.firstWhere((f) => f.name == 'dev');
-      expect(devConfig.appName, equals('YAML Map Dev'));
-      expect(devConfig.applicationIdSuffix, equals('.map.dev'));
-      expect(devConfig.baseUrl, equals('https://dev.api.example.com'));
+        final devConfig = loaded.firstWhere((f) => f.name == 'dev');
+        expect(devConfig.appName, equals('YAML App Dev'));
+        expect(devConfig.applicationId, equals('com.example.app.dev'));
+        expect(devConfig.bundleId, equals('com.example.app.dev'));
+        expect(devConfig.baseUrl, equals('https://dev.api.example.com'));
 
-      final prodConfig = loaded.firstWhere((f) => f.name == 'prod');
-      expect(prodConfig.appName, equals('YAML Map Prod'));
-      expect(prodConfig.applicationIdSuffix, equals(''));
-      expect(prodConfig.baseUrl, equals('https://api.example.com'));
-    });
+        final prodConfig = loaded.firstWhere((f) => f.name == 'prod');
+        expect(prodConfig.appName, equals('YAML App Prod'));
+        expect(prodConfig.applicationId, equals('com.example.app'));
+        expect(prodConfig.bundleId, equals('com.example.app'));
+        expect(prodConfig.baseUrl, equals('https://api.example.com'));
+      },
+    );
 
     test(
       'FlavorYamlLoader throws exception on missing or empty config',

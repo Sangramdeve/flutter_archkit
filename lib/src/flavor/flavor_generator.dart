@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'android/android_flavor_generator.dart';
 import 'config/server_config_generator.dart';
+import 'ide/intellij_run_config_generator.dart';
 import 'ide/vscode_launch_generator.dart';
 import 'ios/ios_flavor_generator.dart';
 import 'parser/flavor_config.dart';
@@ -11,6 +12,7 @@ import 'parser/flavor_config.dart';
 /// - `ios/Runner/Info.plist`
 /// - `lib/core/config/server_config.dart` configuration
 /// - `.vscode/launch.json` configurations
+/// - `.run/<flavor>.run.xml` configurations
 class FlavorGenerator {
   final List<FlavorConfig> flavors;
   final String projectRoot;
@@ -48,6 +50,13 @@ class FlavorGenerator {
       projectRoot: projectRoot,
     );
     await vscodeGen.run();
+
+    // 6. Generate IntelliJ / Android Studio run configurations
+    final intellijGen = IntellijRunConfigGenerator(
+      flavors: flavors,
+      projectRoot: projectRoot,
+    );
+    await intellijGen.run();
 
     stdout.writeln(
       '✅ Flavor setup complete for: ${flavors.map((f) => f.name).join(', ')}',

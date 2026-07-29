@@ -10,13 +10,13 @@ import 'flavor_exceptions.dart';
 /// ```yaml
 /// flavors:
 ///   dev:
-///     appName: "MyApp Dev"
-///     applicationIdSuffix: ".dev"
-///     baseUrl: "https://dev.api.example.com"
-///   prod:
-///     appName: "MyApp"
-///     applicationIdSuffix: ""
-///     baseUrl: "https://api.example.com"
+///     app:
+///       name: "MyApp Dev"
+///       baseUrl: "https://dev.api.example.com"
+///     android:
+///       applicationId: "com.example.myapp.dev"
+///     ios:
+///       bundleId: "com.example.myapp.dev"
 /// ```
 class FlavorYamlLoader {
   final String projectRoot;
@@ -63,38 +63,67 @@ class FlavorYamlLoader {
 
       if (value is! YamlMap) {
         throw FlavorYamlParseException(
-          'flavor "$name" must be a map with appName / applicationIdSuffix '
-          '/ baseUrl keys',
+          'flavor "$name" must be a map containing app, android, and ios sections',
         );
       }
 
-      final appName = value['appName'];
-      final baseUrl = value['baseUrl'];
-      // applicationIdSuffix is optional (prod usually has none)
-      final applicationIdSuffix = value['applicationIdSuffix'] ?? '';
+      final appNode = value['app'];
+      final androidNode = value['android'];
+      final iosNode = value['ios'];
 
-      if (appName == null || appName is! String) {
+      if (appNode is! YamlMap) {
         throw FlavorYamlParseException(
-          'flavor "$name" is missing a required "appName" string',
+          'flavor "$name" is missing required "app" section with "name" and "baseUrl"',
         );
       }
-      if (baseUrl == null || baseUrl is! String) {
+
+      if (androidNode is! YamlMap) {
         throw FlavorYamlParseException(
-          'flavor "$name" is missing a required "baseUrl" string',
+          'flavor "$name" is missing required "android" section with "applicationId"',
         );
       }
-      if (applicationIdSuffix is! String) {
+
+      if (iosNode is! YamlMap) {
         throw FlavorYamlParseException(
-          'flavor "$name" has a non-string "applicationIdSuffix"',
+          'flavor "$name" is missing required "ios" section with "bundleId"',
+        );
+      }
+
+      final appName = appNode['name'];
+      final baseUrl = appNode['baseUrl'];
+      final applicationId = androidNode['applicationId'];
+      final bundleId = iosNode['bundleId'];
+
+      if (appName == null || appName is! String || appName.trim().isEmpty) {
+        throw FlavorYamlParseException(
+          'flavor "$name.app" is missing a non-empty "name" string',
+        );
+      }
+      if (baseUrl == null || baseUrl is! String || baseUrl.trim().isEmpty) {
+        throw FlavorYamlParseException(
+          'flavor "$name.app" is missing a non-empty "baseUrl" string',
+        );
+      }
+      if (applicationId == null ||
+          applicationId is! String ||
+          applicationId.trim().isEmpty) {
+        throw FlavorYamlParseException(
+          'flavor "$name.android" is missing a non-empty "applicationId" string',
+        );
+      }
+      if (bundleId == null || bundleId is! String || bundleId.trim().isEmpty) {
+        throw FlavorYamlParseException(
+          'flavor "$name.ios" is missing a non-empty "bundleId" string',
         );
       }
 
       result.add(
         FlavorConfig(
           name: name,
-          appName: appName,
-          applicationIdSuffix: applicationIdSuffix,
-          baseUrl: baseUrl,
+          appName: appName.trim(),
+          applicationId: applicationId.trim(),
+          bundleId: bundleId.trim(),
+          baseUrl: baseUrl.trim(),
         ),
       );
     }

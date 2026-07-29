@@ -2,7 +2,7 @@ import 'dart:io';
 
 import '../parser/flavor_config.dart';
 
-/// Generates per-flavor .xcconfig files in ios/Flutter directory.
+/// Generates per-flavor .xcconfig files in ios/Flutter directory and updates base xcconfigs.
 class IosXcconfigGenerator {
   final List<FlavorConfig> flavors;
   final String projectRoot;
@@ -21,15 +21,19 @@ class IosXcconfigGenerator {
       for (final config in configs) {
         final file = File('${flavorsDir.path}/$config-${flavor.name}.xcconfig');
 
+        // Profile builds in Flutter inherit from Debug.xcconfig by default
+        final includeConfig = config == 'Profile' ? 'Debug' : config;
+        final podConfigName = '${config.toLowerCase()}-${flavor.name}';
+
         final content =
             '''
-#include "$config.xcconfig"
+#include "$includeConfig.xcconfig"
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.$podConfigName.xcconfig"
 
 FLUTTER_TARGET=lib/main.dart
 APP_NAME=${flavor.appName}
 BASE_URL=${flavor.baseUrl}
-BUNDLE_SUFFIX=${flavor.applicationIdSuffix}
-PRODUCT_BUNDLE_IDENTIFIER=\$(BASE_BUNDLE_ID)${flavor.applicationIdSuffix}
+PRODUCT_BUNDLE_IDENTIFIER=${flavor.bundleId}
 ''';
 
         await file.writeAsString(content);
@@ -37,17 +41,25 @@ PRODUCT_BUNDLE_IDENTIFIER=\$(BASE_BUNDLE_ID)${flavor.applicationIdSuffix}
       }
     }
 
-    // Also write a shared base file
-    final baseFile = File('${flavorsDir.path}/Base.xcconfig');
-    if (!await baseFile.exists()) {
-      await baseFile.writeAsString('''
-// Shared base settings across all flavors.
-// Set your real bundle id prefix here (must match what's in Xcode > Signing).
-BASE_BUNDLE_ID=com.yourcompany.myapp
-''');
-      stdout.writeln(
-        '✏️  Wrote ios/Flutter/Flavors/Base.xcconfig (edit BASE_BUNDLE_ID!)',
-      );
+    await _patchBaseXcconfigs(flavorsDir);
+  }
+
+  Future<void> _patchBaseXcconfigs(Directory flavorsDir) async {
+    for (final mode in ['Debug', 'Release']) {
+      final file = File('${flavorsDir.path}/$mode.xcconfig');
+      if (await file.exists()) {
+        String content = await file.readAsString();
+        final podInclude =
+            '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.${mode.toLowerCase()}.xcconfig"';
+        if (!content.contains(podInclude)) {
+          if (content.isNotEmpty && !content.endsWith('\n')) {
+            content += '\n';
+          }
+          content += '$podInclude\n';
+          await file.writeAsString(content);
+          stdout.writeln('✏️  Updated ${file.path}');
+        }
+      }
     }
   }
 }

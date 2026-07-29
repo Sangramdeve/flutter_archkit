@@ -17,13 +17,21 @@ class FlavorYamlNotFoundException extends FlavorConfigException {
         '   Create one at the root of your Flutter project, e.g.:\n\n'
         '   flavors:\n'
         '     dev:\n'
-        '       appName: "MyApp Dev"\n'
-        '       applicationIdSuffix: ".dev"\n'
-        '       baseUrl: "https://dev.api.example.com"\n'
+        '       app:\n'
+        '         name: "MyApp Dev"\n'
+        '         baseUrl: "https://dev-api.example.com"\n'
+        '       android:\n'
+        '         applicationId: "com.example.myapp.dev"\n'
+        '       ios:\n'
+        '         bundleId: "com.example.myapp.dev"\n'
         '     prod:\n'
-        '       appName: "MyApp"\n'
-        '       applicationIdSuffix: ""\n'
-        '       baseUrl: "https://api.example.com"\n',
+        '       app:\n'
+        '         name: "MyApp"\n'
+        '         baseUrl: "https://api.example.com"\n'
+        '       android:\n'
+        '         applicationId: "com.example.myapp"\n'
+        '       ios:\n'
+        '         bundleId: "com.example.myapp"\n',
       );
 }
 

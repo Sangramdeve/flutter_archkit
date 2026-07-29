@@ -29,70 +29,78 @@ class IosPbxprojPatcher {
         flutterGroup = project.mainGroup;
       }
 
-      final nativeTarget =
-          project.targets.firstWhere(
-                (t) => t is PBXNativeTarget,
-                orElse: () => project.targets.first,
-              )
-              as PBXNativeTarget;
+      final nativeTargets =
+          project.targets.whereType<PBXNativeTarget>().toList();
 
-      for (final flavor in flavors) {
-        for (final mode in ['Debug', 'Profile', 'Release']) {
-          final configName = '$mode-${flavor.name}';
-          final configType = mode == 'Debug'
-              ? BuildConfigType.debug
-              : BuildConfigType.release;
+      for (final nativeTarget in nativeTargets) {
+        for (final flavor in flavors) {
+          for (final mode in ['Debug', 'Profile', 'Release']) {
+            final configName = '$mode-${flavor.name}';
+            final configType = mode == 'Debug'
+                ? BuildConfigType.debug
+                : BuildConfigType.release;
 
-          final xcconfigPath = 'Flutter/$configName.xcconfig';
+            final xcconfigPath = 'Flutter/$configName.xcconfig';
 
-          PBXFileReference? fileRef = project.files
-              .cast<PBXFileReference?>()
-              .firstWhere(
-                (f) =>
-                    f?.path == xcconfigPath ||
-                    f?.name == '$configName.xcconfig',
-                orElse: () => null,
+            PBXFileReference? fileRef =
+                project.files.cast<PBXFileReference?>().firstWhere(
+                      (f) =>
+                          f?.path == xcconfigPath ||
+                          f?.name == '$configName.xcconfig',
+                      orElse: () => null,
+                    );
+
+            if (fileRef == null) {
+              fileRef = project.newObject<PBXFileReference>(
+                (g, u) => PBXFileReference(g, u),
               );
-
-          if (fileRef == null) {
-            fileRef = project.newObject<PBXFileReference>(
-              (g, u) => PBXFileReference(g, u),
-            );
-            fileRef.path = xcconfigPath;
-            fileRef.name = '$configName.xcconfig';
-            fileRef.sourceTree = '<group>';
-            fileRef.lastKnownFileType = 'text.xcconfig';
-            flutterGroup.children.add(fileRef);
-          }
-
-          final targetConfigList = nativeTarget.buildConfigurationList;
-          if (targetConfigList != null) {
-            var targetConfig = targetConfigList[configName];
-            if (targetConfig == null) {
-              targetConfig = project.newObject<XCBuildConfiguration>(
-                (g, u) => XCBuildConfiguration(g, u),
-              );
-              targetConfig.name = configName;
-              targetConfigList.buildConfigurations.add(targetConfig);
+              fileRef.path = xcconfigPath;
+              fileRef.name = '$configName.xcconfig';
+              fileRef.sourceTree = '<group>';
+              fileRef.lastKnownFileType = 'text.xcconfig';
+              flutterGroup.children.add(fileRef);
             }
-            targetConfig.baseConfigurationReference = fileRef;
-            targetConfig.buildSettings = {'PRODUCT_NAME': r'$(TARGET_NAME)'};
-          }
 
-          final baseConfig = project.buildConfigurations
-              .cast<XCBuildConfiguration?>()
-              .firstWhere((c) => c?.name == mode, orElse: () => null);
+            final targetConfigList = nativeTarget.buildConfigurationList;
+            if (targetConfigList != null) {
+              final baseTargetConfig =
+                  targetConfigList.buildConfigurations.firstWhere(
+                (c) => c.name == mode,
+                orElse: () => targetConfigList.buildConfigurations.first,
+              );
 
-          final projectConfig = project.addBuildConfiguration(
-            configName,
-            configType,
-          );
-          projectConfig.baseConfigurationReference = fileRef;
+              var targetConfig = targetConfigList[configName];
+              if (targetConfig == null) {
+                targetConfig = project.newObject<XCBuildConfiguration>(
+                  (g, u) => XCBuildConfiguration(g, u),
+                );
+                targetConfig.name = configName;
+                targetConfigList.buildConfigurations.add(targetConfig);
+              }
+              targetConfig.baseConfigurationReference = fileRef;
+              targetConfig.buildSettings = {
+                ...Map<String, dynamic>.from(baseTargetConfig.buildSettings),
+                'PRODUCT_NAME': r'$(TARGET_NAME)',
+                'IPHONEOS_DEPLOYMENT_TARGET': '16.0',
+              };
+            }
 
-          if (baseConfig != null) {
-            projectConfig.buildSettings = {
-              ...Map<String, dynamic>.from(baseConfig.buildSettings),
-            };
+            final baseConfig = project.buildConfigurations
+                .cast<XCBuildConfiguration?>()
+                .firstWhere((c) => c?.name == mode, orElse: () => null);
+
+            final projectConfig = project.addBuildConfiguration(
+              configName,
+              configType,
+            );
+            projectConfig.baseConfigurationReference = fileRef;
+
+            if (baseConfig != null) {
+              projectConfig.buildSettings = {
+                ...Map<String, dynamic>.from(baseConfig.buildSettings),
+                'IPHONEOS_DEPLOYMENT_TARGET': '16.0',
+              };
+            }
           }
         }
       }
@@ -101,6 +109,7 @@ class IosPbxprojPatcher {
       stdout.writeln(
         '✏️  Updated ios/Runner.xcodeproj/project.pbxproj using dart_xcodeproj',
       );
+      await _updateDeploymentTarget(pbxprojFile);
       return;
     } catch (e) {
       stderr.writeln(
@@ -109,6 +118,30 @@ class IosPbxprojPatcher {
     }
 
     await _patchPbxprojRegex(pbxprojFile);
+    await _updateDeploymentTarget(pbxprojFile);
+  }
+
+  Future<void> _updateDeploymentTarget(File pbxprojFile) async {
+    if (!await pbxprojFile.exists()) return;
+    String content = await pbxprojFile.readAsString();
+    final regExp = RegExp(r'IPHONEOS_DEPLOYMENT_TARGET\s*=\s*([0-9.]+);');
+    bool modified = false;
+
+    content = content.replaceAllMapped(regExp, (match) {
+      final currentVersion = double.tryParse(match.group(1)!) ?? 0.0;
+      if (currentVersion < 16.0) {
+        modified = true;
+        return 'IPHONEOS_DEPLOYMENT_TARGET = 16.0;';
+      }
+      return match.group(0)!;
+    });
+
+    if (modified) {
+      await pbxprojFile.writeAsString(content);
+      stdout.writeln(
+        '✏️  Updated IPHONEOS_DEPLOYMENT_TARGET to 16.0 in project.pbxproj',
+      );
+    }
   }
 
   Future<void> _patchPbxprojRegex(File pbxprojFile) async {
@@ -252,14 +285,10 @@ class IosPbxprojPatcher {
 
   String _generatePbxId(String seed) {
     final part1 = seed.hashCode.abs().toRadixString(16).padLeft(8, '0');
-    final part2 = '${seed}part2'.hashCode
-        .abs()
-        .toRadixString(16)
-        .padLeft(8, '0');
-    final part3 = '${seed}part3'.hashCode
-        .abs()
-        .toRadixString(16)
-        .padLeft(8, '0');
+    final part2 =
+        '${seed}part2'.hashCode.abs().toRadixString(16).padLeft(8, '0');
+    final part3 =
+        '${seed}part3'.hashCode.abs().toRadixString(16).padLeft(8, '0');
     return '$part1$part2$part3'.substring(0, 24).toUpperCase();
   }
 }

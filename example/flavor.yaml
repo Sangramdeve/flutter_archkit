@@ -1,8 +1,18 @@
 flavors:
   dev:
-    appName: "Example Dev"
-    applicationIdSuffix: ".dev"
-    baseUrl: "https://dev-api.example.com"
+    app:
+      name: "Example Dev"
+      baseUrl: "https://dev-api.example.com"
+    android:
+      applicationId: "com.example.app.dev"
+    ios:
+      bundleId: "com.example.app.dev"
+
   prod:
-    appName: "Example"
-    baseUrl: "https://api.example.com"
+    app:
+      name: "Example"
+      baseUrl: "https://api.example.com"
+    android:
+      applicationId: "com.example.app"
+    ios:
+      bundleId: "com.example.app"

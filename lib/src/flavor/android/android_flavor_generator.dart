@@ -40,7 +40,7 @@ class AndroidFlavorGenerator {
       buffer.writeln('        create("${flavor.name}") {');
       buffer.writeln('            dimension = "default"');
       buffer.writeln(
-        '            applicationIdSuffix = "${flavor.applicationIdSuffix}"',
+        '            applicationId = "${flavor.applicationId}"',
       );
       buffer.writeln(
         '            resValue(type = "string", name = "app_name", value = "${flavor.appName}")',
@@ -53,7 +53,26 @@ class AndroidFlavorGenerator {
     buffer.writeln('}');
     buffer.writeln(_endMarker);
 
-    await flavorFile.writeAsString(buffer.toString());
+    final newContent = buffer.toString();
+
+    if (await flavorFile.exists()) {
+      final currentContent = await flavorFile.readAsString();
+      if (currentContent.contains(_startMarker) &&
+          currentContent.contains(_endMarker)) {
+        final startIndex = currentContent.indexOf(_startMarker);
+        final endIndex =
+            currentContent.indexOf(_endMarker) + _endMarker.length;
+        final updatedContent = currentContent.replaceRange(
+          startIndex,
+          endIndex,
+          newContent,
+        );
+        await flavorFile.writeAsString(updatedContent);
+        return;
+      }
+    }
+
+    await flavorFile.writeAsString(newContent);
   }
 
   Future<void> _updateBuildGradleKts() async {

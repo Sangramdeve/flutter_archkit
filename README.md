@@ -13,10 +13,10 @@ A comprehensive Flutter Architecture CLI generator and multi-flavor configuratio
 - ⚡ **Feature Module Generator (`archkit feature <name>` / `archkit -f <name>`)**: Instantly generates feature modules (`auth`, `profile`, `home`, etc.) matching your project's architecture.
 - 🔄 **Smart Metadata Auto-Detection**: Stores selected settings in `.metadata` so feature generation works without requiring command flags.
 - 📂 **Modular Template Engine**: Clean templates for Clean Architecture (data, domain, presentation, di), MVVM (models, services, viewmodels, views), and MVC (models, controllers, views).
-- 🤖 **Android Flavor Setup**: Automatically configures `productFlavors` and `dimension` in `android/app/build.gradle.kts`.
-- 🍎 **iOS Flavor Setup**: Generates flavor `.xcconfig` files, shared `.xcscheme` schemes, patches `Info.plist` display names, and updates Xcode `project.pbxproj` build configurations.
-- ⚙️ **Dart ServerConfig**: Generates `lib/core/config/server_config.dart` and flavor main entrypoints (`lib/main_<flavor>.dart`).
-- 💻 **IDE Support**: Automatically writes `.vscode/launch.json` with debug, profile, and release launch configurations for each flavor.
+- 🤖 **Android Flavor Setup**: Automatically configures `productFlavors` and `applicationId` in `android/app/flavor.gradle.kts` and links with `build.gradle.kts`.
+- 🍎 **iOS Flavor Setup**: Generates flavor `.xcconfig` files, CocoaPods target dependencies (`#include? Pods-Runner`), shared `.xcscheme` schemes, patches `Info.plist`, updates Xcode `project.pbxproj` build configurations, and sets `IPHONEOS_DEPLOYMENT_TARGET = 16.0`.
+- ⚙️ **Dart ServerConfig**: Generates strongly-typed `lib/core/config/server_config.dart` runtime environment configurations.
+- 💻 **IDE Support**: Automatically writes `.vscode/launch.json` for VS Code and `.run/<flavor>.run.xml` run configurations for Android Studio / IntelliJ IDEA.
 
 ---
 
@@ -32,7 +32,7 @@ Or add it to your project `pubspec.yaml` under `dev_dependencies`:
 
 ```yaml
 dev_dependencies:
-  flutter_archkit: ^0.0.1
+  flutter_archkit: ^0.0.2
 ```
 
 ---
@@ -80,20 +80,42 @@ archkit -f auth
 
 ### 3. Multi-Flavor Setup (`setup_flavor`)
 
-Create a `flavor.yaml` in your project root:
+Generate a sample `flavor.yaml` automatically:
+
+```bash
+dart run flutter_archkit:setup_flavor --init
+```
+
+Or create `flavor.yaml` manually in your project root:
 
 ```yaml
 flavors:
   dev:
-    appName: "MyApp Dev"
-    applicationIdSuffix: ".dev"
-    baseUrl: "https://dev.api.example.com"
+    app:
+      name: "Example Dev"
+      baseUrl: "https://dev-api.example.com"
+    android:
+      applicationId: "com.example.app.dev"
+    ios:
+      bundleId: "com.example.app.dev"
+
   prod:
-    appName: "MyApp"
-    baseUrl: "https://api.example.com"
+    app:
+      name: "Example"
+      baseUrl: "https://api.example.com"
+    android:
+      applicationId: "com.example.app"
+    ios:
+      bundleId: "com.example.app"
 ```
 
-Then execute the flavor setup CLI:
+Validate your configuration:
+
+```bash
+dart run flutter_archkit:setup_flavor --validate
+```
+
+Execute the multi-flavor code generator:
 
 ```bash
 dart run flutter_archkit:setup_flavor
