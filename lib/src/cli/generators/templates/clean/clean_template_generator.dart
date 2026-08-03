@@ -15,6 +15,8 @@ class CleanTemplateGenerator extends TemplateGenerator {
     final base = p.join(projectPath, 'lib', 'features', snake);
     final sm = config.stateManagement.toLowerCase();
 
+    final useDi = config.useDi;
+
     // Data layer
     writeFile(
       p.join(base, 'data', 'data_sources', '${snake}_remote_datasource.dart'),
@@ -25,12 +27,15 @@ abstract class ${pascal}RemoteDataSource {
 ''',
     );
 
+    final dsDiImport = useDi ? "import 'package:injectable/injectable.dart';\n" : "";
+    final dsDiAnnotation = useDi ? "@LazySingleton(as: ${pascal}RemoteDataSource)\n" : "";
+
     writeFile(
       p.join(base, 'data', 'data_sources', '${snake}_remote_datasource_impl.dart'),
       '''
-import '${snake}_remote_datasource.dart';
+${dsDiImport}import '${snake}_remote_datasource.dart';
 
-class ${pascal}RemoteDataSourceImpl implements ${pascal}RemoteDataSource {
+${dsDiAnnotation}class ${pascal}RemoteDataSourceImpl implements ${pascal}RemoteDataSource {
   @override
   Future<String> get${pascal}Data() async {
     return 'Data loaded from ${pascal}RemoteDataSource';
@@ -58,13 +63,16 @@ class ${pascal}Model {
 ''',
     );
 
+    final repoDiImport = useDi ? "import 'package:injectable/injectable.dart';\n" : "";
+    final repoDiAnnotation = useDi ? "@LazySingleton(as: ${pascal}Repository)\n" : "";
+
     writeFile(
       p.join(base, 'data', 'repositories', '${snake}_repository_impl.dart'),
       '''
-import '../../domain/repositories/${snake}_repository.dart';
+${repoDiImport}import '../../domain/repositories/${snake}_repository.dart';
 import '../data_sources/${snake}_remote_datasource.dart';
 
-class ${pascal}RepositoryImpl implements ${pascal}Repository {
+${repoDiAnnotation}class ${pascal}RepositoryImpl implements ${pascal}Repository {
   final ${pascal}RemoteDataSource remoteDataSource;
 
   ${pascal}RepositoryImpl({required this.remoteDataSource});
@@ -78,9 +86,35 @@ class ${pascal}RepositoryImpl implements ${pascal}Repository {
     );
 
     // DI layer
-    writeFile(
-      p.join(base, 'di', '${snake}_di.dart'),
-      '''
+    if (useDi) {
+      writeFile(
+        p.join(base, 'di', '${snake}_di.dart'),
+        '''
+import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
+
+import '${snake}_di.config.dart';
+
+@InjectableInit(
+  initializerName: 'init${pascal}Di',
+  preferRelativeImports: true,
+  asExtension: false,
+  generateForDir: ['lib/features/$snake'],
+)
+void configure${pascal}Dependencies() => init${pascal}Di(GetIt.instance);
+''',
+      );
+
+      writeFile(
+        p.join(base, 'di', '${snake}_di.config.dart'),
+        '''
+// Auto-generated DI configuration file for $pascal feature
+''',
+      );
+    } else {
+      writeFile(
+        p.join(base, 'di', '${snake}_di.dart'),
+        '''
 import '../data/data_sources/${snake}_remote_datasource.dart';
 import '../data/data_sources/${snake}_remote_datasource_impl.dart';
 import '../data/repositories/${snake}_repository_impl.dart';
@@ -95,14 +129,15 @@ class ${pascal}DI {
   }
 }
 ''',
-    );
+      );
 
-    writeFile(
-      p.join(base, 'di', '${snake}_di.config.dart'),
-      '''
+      writeFile(
+        p.join(base, 'di', '${snake}_di.config.dart'),
+        '''
 // Auto-generated or manual DI configuration file for $pascal feature
 ''',
-    );
+      );
+    }
 
     // Domain layer
     writeFile(
@@ -114,12 +149,15 @@ abstract class ${pascal}Repository {
 ''',
     );
 
+    final usecaseDiImport = useDi ? "import 'package:injectable/injectable.dart';\n" : "";
+    final usecaseDiAnnotation = useDi ? "@lazySingleton\n" : "";
+
     writeFile(
       p.join(base, 'domain', 'usecases', '${snake}_usecase.dart'),
       '''
-import '../repositories/${snake}_repository.dart';
+${usecaseDiImport}import '../repositories/${snake}_repository.dart';
 
-class ${pascal}UseCase {
+${usecaseDiAnnotation}class ${pascal}UseCase {
   final ${pascal}Repository repository;
 
   ${pascal}UseCase({required this.repository});
@@ -134,10 +172,10 @@ class ${pascal}UseCase {
     // Presentation layer (State Management)
     switch (sm) {
       case 'bloc':
-        CleanBlocTemplate.generate(this, base, featureName);
+        CleanBlocTemplate.generate(this, base, featureName, useDi: useDi);
         break;
       case 'cubit':
-        CleanCubitTemplate.generate(this, base, featureName);
+        CleanCubitTemplate.generate(this, base, featureName, useDi: useDi);
         break;
       case 'riverpod':
         CleanRiverpodTemplate.generate(this, base, featureName);
@@ -150,7 +188,7 @@ class ${pascal}UseCase {
         CleanGetXTemplate.generate(this, base, featureName);
         break;
       default:
-        CleanBlocTemplate.generate(this, base, featureName);
+        CleanBlocTemplate.generate(this, base, featureName, useDi: useDi);
     }
 
     // Page view

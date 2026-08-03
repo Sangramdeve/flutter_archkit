@@ -33,6 +33,9 @@ class ProjectGenerator {
     if (config.router != null && config.router!.isNotEmpty) {
       await _pubspecModifier.addRouterDependencies(projectPath, config.router!);
     }
+    if (config.useDi) {
+      await _pubspecModifier.addDIDependencies(projectPath);
+    }
     await _processService.runFlutterPubGet(projectPath: projectPath);
   }
 }

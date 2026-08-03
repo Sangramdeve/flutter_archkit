@@ -2,7 +2,7 @@ import 'package:path/path.dart' as p;
 import '../../template_generator.dart';
 
 class CleanBlocTemplate {
-  static void generate(TemplateGenerator generator, String basePath, String featureName) {
+  static void generate(TemplateGenerator generator, String basePath, String featureName, {bool useDi = false}) {
     final pascal = featureName.toPascalCase();
     final snake = featureName.toLowerCase();
 
@@ -29,15 +29,18 @@ class ${pascal}Loaded extends ${pascal}State {
 ''',
     );
 
+    final diImport = useDi ? "import 'package:injectable/injectable.dart';\n" : "";
+    final diAnnotation = useDi ? "@injectable\n" : "";
+
     generator.writeFile(
       p.join(basePath, 'presentation', 'bloc', '${snake}_bloc.dart'),
       '''
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/usecases/${snake}_usecase.dart';
+${diImport}import '../../domain/usecases/${snake}_usecase.dart';
 import '${snake}_event.dart';
 import '${snake}_state.dart';
 
-class ${pascal}Bloc extends Bloc<${pascal}Event, ${pascal}State> {
+${diAnnotation}class ${pascal}Bloc extends Bloc<${pascal}Event, ${pascal}State> {
   final ${pascal}UseCase ${featureName}UseCase;
 
   ${pascal}Bloc({required this.${featureName}UseCase}) : super(${pascal}Initial()) {

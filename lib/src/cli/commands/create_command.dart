@@ -20,6 +20,11 @@ class CreateCommand extends Command<int> {
     argParser
       ..addOption('org', help: 'Organization identifier (e.g. com.example)')
       ..addOption('architecture', help: 'Architecture (Clean, MVVM, MVC)')
+      ..addFlag(
+        'di',
+        help: 'Enable Dependency Injection (GetIt + Injectable)',
+        defaultsTo: false,
+      )
       ..addOption(
         'state-management',
         help: 'State management (Bloc, Riverpod, Provider, GetX)',
@@ -31,7 +36,8 @@ class CreateCommand extends Command<int> {
       ..addOption(
         'router',
         abbr: 'r',
-        help: 'Route system (Navigator 1.0, Navigator 2.0, Go Router, Auto Route, GetX Routing)',
+        help:
+            'Route system (Navigator 1.0, Navigator 2.0, Go Router, Auto Route, GetX Routing)',
       );
   }
 
@@ -108,7 +114,10 @@ class CreateCommand extends Command<int> {
     ];
     if (routerOption != null && routerOption.isNotEmpty) {
       selectedRouter = routerChoices.firstWhere(
-        (e) => e.toLowerCase().replaceAll(' ', '').contains(routerOption.toLowerCase().replaceAll(' ', '')),
+        (e) => e
+            .toLowerCase()
+            .replaceAll(' ', '')
+            .contains(routerOption.toLowerCase().replaceAll(' ', '')),
         orElse: () => routerOption,
       );
     } else {
@@ -120,7 +129,18 @@ class CreateCommand extends Command<int> {
       selectedRouter = routerChoices[routerIndex];
     }
 
-    // 5. Organization Identifier
+    // 5. Dependency Injection Prompt
+    bool useDi;
+    if (argResults?.wasParsed('di') == true) {
+      useDi = argResults!['di'] as bool;
+    } else {
+      useDi = Confirm(
+        prompt: 'Include Dependency Injection (GetIt + Injectable)?',
+        defaultValue: true,
+      ).interact();
+    }
+
+    // 6. Organization Identifier
     final orgOption = argResults?['org'] as String?;
     String org;
     if (orgOption != null && orgOption.isNotEmpty) {
@@ -135,7 +155,7 @@ class CreateCommand extends Command<int> {
       }
     }
 
-    // 6. Platforms
+    // 7. Platforms
     final platformOption = argResults?['platforms'] as String?;
     List<String> selectedPlatforms;
     final platformList = const [
@@ -168,6 +188,7 @@ class CreateCommand extends Command<int> {
       organization: org,
       platforms: selectedPlatforms,
       router: selectedRouter,
+      useDi: useDi,
     );
 
     final projectPath = p.join(Directory.current.path, projectName);

@@ -5,6 +5,7 @@ class ProjectConfig {
   final String organization;
   final List<String> platforms;
   final String? router;
+  final bool useDi;
 
   const ProjectConfig({
     required this.name,
@@ -13,5 +14,6 @@ class ProjectConfig {
     required this.organization,
     required this.platforms,
     this.router,
+    this.useDi = false,
   });
 }

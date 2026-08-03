@@ -117,4 +117,61 @@ class PubspecModifier {
 
     pubspecFile.writeAsStringSync(content);
   }
+
+  Future<void> addDIDependencies(String projectPath) async {
+    final pubspecFile = File(p.join(projectPath, 'pubspec.yaml'));
+    if (!pubspecFile.existsSync()) return;
+
+    var content = pubspecFile.readAsStringSync();
+    final depsMap = <String, String>{
+      'get_it': '^7.6.0',
+      'injectable': '^2.3.2',
+    };
+    final devDepsMap = <String, String>{
+      'injectable_generator': '^2.4.1',
+      'build_runner': '^2.4.8',
+    };
+
+    var lines = content.split('\n');
+    var newLines = <String>[];
+
+    for (var line in lines) {
+      newLines.add(line);
+      if (line.trim() == 'dependencies:') {
+        for (var entry in depsMap.entries) {
+          if (!content.contains('${entry.key}:')) {
+            newLines.add('  ${entry.key}: ${entry.value}');
+          }
+        }
+      }
+    }
+    content = newLines.join('\n');
+
+    lines = content.split('\n');
+    newLines = <String>[];
+    var hasDevDeps = lines.any((l) => l.trim() == 'dev_dependencies:');
+
+    if (!hasDevDeps) {
+      newLines.addAll(lines);
+      newLines.add('');
+      newLines.add('dev_dependencies:');
+      for (var entry in devDepsMap.entries) {
+        newLines.add('  ${entry.key}: ${entry.value}');
+      }
+    } else {
+      for (var line in lines) {
+        newLines.add(line);
+        if (line.trim() == 'dev_dependencies:') {
+          for (var entry in devDepsMap.entries) {
+            if (!content.contains('${entry.key}:')) {
+              newLines.add('  ${entry.key}: ${entry.value}');
+            }
+          }
+        }
+      }
+    }
+    content = newLines.join('\n');
+
+    pubspecFile.writeAsStringSync(content);
+  }
 }

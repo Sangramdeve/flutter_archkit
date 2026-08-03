@@ -8,6 +8,8 @@ import 'package:flutter_archkit/src/cli/generators/templates/clean/clean_templat
 import 'package:flutter_archkit/src/cli/generators/templates/mvvm/mvvm_template_generator.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/mvc/mvc_template_generator.dart';
 
+import 'package:flutter_archkit/src/cli/generators/project/pubspec_modifier.dart';
+
 class CreateFeatureCommand extends Command<int> {
   @override
   String get name => 'feature';
@@ -19,13 +21,18 @@ class CreateFeatureCommand extends Command<int> {
   String get description => 'Generate a new feature module';
 
   final MetadataConfigService _metadataConfigService;
+  final PubspecModifier _pubspecModifier;
 
-  CreateFeatureCommand({MetadataConfigService? metadataConfigService})
-      : _metadataConfigService = metadataConfigService ?? MetadataConfigService() {
+  CreateFeatureCommand({
+    MetadataConfigService? metadataConfigService,
+    PubspecModifier? pubspecModifier,
+  })  : _metadataConfigService = metadataConfigService ?? MetadataConfigService(),
+        _pubspecModifier = pubspecModifier ?? PubspecModifier() {
     argParser
       ..addOption('name', abbr: 'n', help: 'Feature name (e.g. auth, profile)')
       ..addOption('architecture', help: 'Architecture (Clean, MVVM, MVC)')
-      ..addOption('state-management', help: 'State management (Bloc, Cubit, Riverpod, Provider, GetX)');
+      ..addOption('state-management', help: 'State management (Bloc, Cubit, Riverpod, Provider, GetX)')
+      ..addFlag('di', help: 'Enable Dependency Injection (GetIt + Injectable)', defaultsTo: false);
   }
 
   @override
@@ -99,6 +106,18 @@ class CreateFeatureCommand extends Command<int> {
       stateManagement = smChoices[smIndex];
     }
 
+    // 4. Dependency Injection Prompt
+    bool useDi;
+    if (argResults?.wasParsed('di') == true) {
+      useDi = argResults!['di'] as bool;
+    } else {
+      useDi = Confirm(
+        prompt: 'Include Dependency Injection (GetIt + Injectable)?',
+        defaultValue: true,
+      ).interact();
+    }
+    logger.info('${'Dependency Injection'.padRight(18)}: ${useDi ? 'Enabled (GetIt + Injectable)' : 'Disabled'}');
+
     // Save or update .metadata if missing or explicitly overridden
     _metadataConfigService.writeConfig(
       Directory.current.path,
@@ -112,10 +131,15 @@ class CreateFeatureCommand extends Command<int> {
       stateManagement: stateManagement,
       organization: 'com.example',
       platforms: const ['android', 'ios'],
+      useDi: useDi,
     );
 
     final projectPath = Directory.current.path;
     final progress = logger.progress('Generating feature \'$featureName\'...');
+
+    if (useDi) {
+      await _pubspecModifier.addDIDependencies(projectPath);
+    }
 
     final archLower = architecture.toLowerCase();
     if (archLower == 'clean') {
