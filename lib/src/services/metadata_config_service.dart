@@ -5,10 +5,12 @@ import 'package:yaml/yaml.dart';
 class MetadataConfig {
   final String architecture;
   final String stateManagement;
+  final String? router;
 
   const MetadataConfig({
     required this.architecture,
     required this.stateManagement,
+    this.router,
   });
 }
 
@@ -26,10 +28,12 @@ class MetadataConfigService {
             if (archkitNode is Map) {
               final arch = archkitNode['architecture']?.toString();
               final sm = archkitNode['state_management']?.toString();
+              final router = archkitNode['router']?.toString();
               if (arch != null && arch.isNotEmpty && sm != null && sm.isNotEmpty) {
                 return MetadataConfig(
                   architecture: arch,
                   stateManagement: sm,
+                  router: router,
                 );
               }
             }
@@ -45,15 +49,17 @@ class MetadataConfigService {
     String projectPath, {
     required String architecture,
     required String stateManagement,
+    String? router,
   }) {
     final metadataFile = File(p.join(projectPath, '.metadata'));
     var content = metadataFile.existsSync() ? metadataFile.readAsStringSync() : '';
 
+    final routerLine = router != null ? '\n  router: $router' : '';
     final archkitBlock = '''
 
 archkit:
   architecture: $architecture
-  state_management: $stateManagement
+  state_management: $stateManagement$routerLine
 ''';
 
     if (content.contains('archkit:')) {

@@ -30,6 +30,9 @@ class ProjectGenerator {
 
   Future<void> installDependencies(ProjectConfig config, {required String projectPath}) async {
     await _pubspecModifier.addDependencies(projectPath, config.stateManagement);
+    if (config.router != null && config.router!.isNotEmpty) {
+      await _pubspecModifier.addRouterDependencies(projectPath, config.router!);
+    }
     await _processService.runFlutterPubGet(projectPath: projectPath);
   }
 }

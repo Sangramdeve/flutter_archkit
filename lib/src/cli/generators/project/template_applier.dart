@@ -6,6 +6,8 @@ import 'package:flutter_archkit/src/cli/generators/templates/clean/clean_templat
 import 'package:flutter_archkit/src/cli/generators/templates/mvvm/mvvm_template_generator.dart';
 import 'package:flutter_archkit/src/cli/generators/templates/mvc/mvc_template_generator.dart';
 
+import 'package:flutter_archkit/src/cli/generators/route/route_generator.dart';
+
 class TemplateApplier {
   final MetadataConfigService _metadataConfigService;
 
@@ -30,12 +32,17 @@ class TemplateApplier {
       await CleanTemplateGenerator().generate(config, projectPath);
     }
 
-    _generateMainDart(projectPath, config);
+    if (config.router != null && config.router!.isNotEmpty) {
+      await RouteGenerator().generate(projectPath, config.router!);
+    } else {
+      _generateMainDart(projectPath, config);
+    }
 
     _metadataConfigService.writeConfig(
       projectPath,
       architecture: config.architecture,
       stateManagement: config.stateManagement,
+      router: config.router,
     );
   }
 

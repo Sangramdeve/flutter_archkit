@@ -27,6 +27,11 @@ class CreateCommand extends Command<int> {
       ..addOption(
         'platforms',
         help: 'Comma-separated platforms (android,ios,web,windows,macos,linux)',
+      )
+      ..addOption(
+        'router',
+        abbr: 'r',
+        help: 'Route system (Navigator 1.0, Navigator 2.0, Go Router, Auto Route, GetX Routing)',
       );
   }
 
@@ -91,7 +96,31 @@ class CreateCommand extends Command<int> {
       stateManagement = smChoices[smIndex];
     }
 
-    // 4. Organization Identifier
+    // 4. Select Route System
+    final routerOption = argResults?['router'] as String?;
+    String selectedRouter;
+    final routerChoices = const [
+      'Navigator 1.0',
+      'Navigator 2.0',
+      'Go Router',
+      'Auto Route',
+      'GetX Routing',
+    ];
+    if (routerOption != null && routerOption.isNotEmpty) {
+      selectedRouter = routerChoices.firstWhere(
+        (e) => e.toLowerCase().replaceAll(' ', '').contains(routerOption.toLowerCase().replaceAll(' ', '')),
+        orElse: () => routerOption,
+      );
+    } else {
+      final routerIndex = Select(
+        prompt: 'Select Route System',
+        options: routerChoices,
+        initialIndex: 0,
+      ).interact();
+      selectedRouter = routerChoices[routerIndex];
+    }
+
+    // 5. Organization Identifier
     final orgOption = argResults?['org'] as String?;
     String org;
     if (orgOption != null && orgOption.isNotEmpty) {
@@ -106,7 +135,7 @@ class CreateCommand extends Command<int> {
       }
     }
 
-    // 5. Platforms
+    // 6. Platforms
     final platformOption = argResults?['platforms'] as String?;
     List<String> selectedPlatforms;
     final platformList = const [
@@ -138,6 +167,7 @@ class CreateCommand extends Command<int> {
       stateManagement: stateManagement,
       organization: org,
       platforms: selectedPlatforms,
+      router: selectedRouter,
     );
 
     final projectPath = p.join(Directory.current.path, projectName);

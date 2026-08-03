@@ -4,6 +4,7 @@ class ProjectConfig {
   final String stateManagement;
   final String organization;
   final List<String> platforms;
+  final String? router;
 
   const ProjectConfig({
     required this.name,
@@ -11,5 +12,6 @@ class ProjectConfig {
     required this.stateManagement,
     required this.organization,
     required this.platforms,
+    this.router,
   });
 }
