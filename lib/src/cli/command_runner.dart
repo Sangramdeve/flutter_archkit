@@ -3,6 +3,7 @@ import 'package:flutter_archkit/src/cli/commands/create_command.dart';
 import 'package:flutter_archkit/src/cli/commands/create_feature_command.dart';
 import 'package:flutter_archkit/src/cli/commands/network_command.dart';
 import 'package:flutter_archkit/src/cli/commands/route_command.dart';
+import 'package:flutter_archkit/src/cli/commands/storage_command.dart';
 
 class FlutterArchkitCommandRunner extends CommandRunner<int> {
   FlutterArchkitCommandRunner()
@@ -11,6 +12,7 @@ class FlutterArchkitCommandRunner extends CommandRunner<int> {
     addCommand(CreateFeatureCommand());
     addCommand(RouteCommand());
     addCommand(NetworkCommand());
+    addCommand(StorageCommand());
   }
 }
 

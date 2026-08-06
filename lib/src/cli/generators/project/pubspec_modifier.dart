@@ -200,4 +200,86 @@ class PubspecModifier {
     content = newLines.join('\n');
     pubspecFile.writeAsStringSync(content);
   }
+
+  Future<void> addStorageDependencies(
+    String projectPath,
+    String storageType,
+  ) async {
+    final pubspecFile = File(p.join(projectPath, 'pubspec.yaml'));
+    if (!pubspecFile.existsSync()) return;
+
+    var content = pubspecFile.readAsStringSync();
+    final depsMap = <String, String>{};
+    final devDepsMap = <String, String>{};
+
+    final type = storageType.toLowerCase();
+    if (type.contains('hive')) {
+      depsMap['hive'] = '^2.2.3';
+      depsMap['hive_flutter'] = '^1.1.0';
+      devDepsMap['hive_generator'] = '^2.0.1';
+      devDepsMap['build_runner'] = '^2.4.8';
+    } else if (type.contains('sqlite') || type.contains('sqflite')) {
+      depsMap['sqflite'] = '^2.3.2';
+      depsMap['path'] = '^1.9.0';
+    } else if (type.contains('drift')) {
+      depsMap['drift'] = '^2.16.0';
+      depsMap['sqlite3_flutter_libs'] = '^0.5.20';
+      depsMap['path_provider'] = '^2.1.2';
+      depsMap['path'] = '^1.9.0';
+      devDepsMap['drift_dev'] = '^2.16.0';
+      devDepsMap['build_runner'] = '^2.4.8';
+    } else if (type.contains('objectbox')) {
+      depsMap['objectbox'] = '^4.0.0';
+      depsMap['objectbox_flutter_libs'] = '^4.0.0';
+      depsMap['path_provider'] = '^2.1.2';
+      devDepsMap['objectbox_generator'] = '^4.0.0';
+      devDepsMap['build_runner'] = '^2.4.8';
+    }
+
+    if (depsMap.isEmpty) return;
+
+    var lines = content.split('\n');
+    var newLines = <String>[];
+
+    for (var line in lines) {
+      newLines.add(line);
+      if (line.trim() == 'dependencies:') {
+        for (var entry in depsMap.entries) {
+          if (!content.contains('${entry.key}:')) {
+            newLines.add('  ${entry.key}: ${entry.value}');
+          }
+        }
+      }
+    }
+    content = newLines.join('\n');
+
+    if (devDepsMap.isNotEmpty) {
+      lines = content.split('\n');
+      newLines = <String>[];
+      var hasDevDeps = lines.any((l) => l.trim() == 'dev_dependencies:');
+
+      if (!hasDevDeps) {
+        newLines.addAll(lines);
+        newLines.add('');
+        newLines.add('dev_dependencies:');
+        for (var entry in devDepsMap.entries) {
+          newLines.add('  ${entry.key}: ${entry.value}');
+        }
+      } else {
+        for (var line in lines) {
+          newLines.add(line);
+          if (line.trim() == 'dev_dependencies:') {
+            for (var entry in devDepsMap.entries) {
+              if (!content.contains('${entry.key}:')) {
+                newLines.add('  ${entry.key}: ${entry.value}');
+              }
+            }
+          }
+        }
+      }
+      content = newLines.join('\n');
+    }
+
+    pubspecFile.writeAsStringSync(content);
+  }
 }
