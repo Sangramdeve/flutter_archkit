@@ -2,7 +2,11 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 class RouteGenerator {
-  Future<void> generate(String projectPath, String routerOption) async {
+  Future<void> generate(
+    String projectPath,
+    String routerOption, {
+    bool includeShell = true,
+  }) async {
     final routerDir = Directory(p.join(projectPath, 'lib', 'core', 'router'));
     if (!routerDir.existsSync()) {
       routerDir.createSync(recursive: true);
@@ -11,14 +15,25 @@ class RouteGenerator {
     final normalized = _normalizeRouterOption(routerOption);
 
     // Detect existing home page / view
-    final cleanHome = File(p.join(projectPath, 'lib', 'features', 'home', 'presentation', 'page', 'home_page.dart'));
+    final cleanHome = File(
+      p.join(
+        projectPath,
+        'lib',
+        'features',
+        'home',
+        'presentation',
+        'page',
+        'home_page.dart',
+      ),
+    );
     final mvvmHome = File(p.join(projectPath, 'lib', 'views', 'home_view.dart'));
 
     String homeImport = '';
     String homeWidget = "const Scaffold(body: Center(child: Text('Home Page')))";
 
     if (cleanHome.existsSync()) {
-      homeImport = "import '../../features/home/presentation/page/home_page.dart';";
+      homeImport =
+          "import '../../features/home/presentation/page/home_page.dart';";
       homeWidget = "const HomePage()";
     } else if (mvvmHome.existsSync()) {
       homeImport = "import '../../views/home_view.dart';";
@@ -33,7 +48,12 @@ class RouteGenerator {
         _generateNavigator2(projectPath, homeImport, homeWidget);
         break;
       case 'go_router':
-        _generateGoRouter(projectPath, homeImport, homeWidget);
+        _generateGoRouter(
+          projectPath,
+          homeImport,
+          homeWidget,
+          includeShell: includeShell,
+        );
         break;
       case 'auto_route':
         _generateAutoRoute(projectPath, homeImport, homeWidget);
@@ -252,25 +272,199 @@ class _MyAppState extends State<MyApp> {
     mainFile.writeAsStringSync(mainCode);
   }
 
-  void _generateGoRouter(String projectPath, String homeImport, String homeWidget) {
-    final routerFile = File(p.join(projectPath, 'lib', 'core', 'router', 'app_router.dart'));
-    final code = '''
+  void _generateGoRouter(
+    String projectPath,
+    String homeImport,
+    String homeWidget, {
+    bool includeShell = true,
+  }) {
+    final routerDir = p.join(projectPath, 'lib', 'core', 'router');
+
+    // 1. app_routes.dart
+    final routesFile = File(p.join(routerDir, 'app_routes.dart'));
+    final routesCode = '''
+class AppRoutes {
+  static const String home = '/';
+  static const String profile = '/profile';
+  static const String settings = '/settings';
+  static const String details = '/details';
+}
+''';
+    routesFile.writeAsStringSync(routesCode);
+
+    // 2. route_functions.dart
+    final functionsFile = File(p.join(routerDir, 'route_functions.dart'));
+    final functionsCode = '''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
+GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+GlobalKey<ScaffoldMessengerState> globalMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+Future<Object?> pushNamed(String routeName, {Object? arguments}) async {
+  return GoRouter.of(
+    navigatorKey.currentContext!,
+  ).push(routeName, extra: arguments);
+}
+
+void pushReplacement(String routeName, {Object? extra}) {
+  GoRouter.of(
+    navigatorKey.currentContext!,
+  ).pushReplacement(routeName, extra: extra);
+}
+
+void clearAndGo(String path, {Object? extra}) {
+  GoRouter.of(navigatorKey.currentContext!).go(path, extra: extra);
+}
+
+void pop([Object? result]) {
+  GoRouter.of(navigatorKey.currentContext!).pop(result);
+}
+''';
+    functionsFile.writeAsStringSync(functionsCode);
+
+    // 3. bottom_shell_route.dart (if includeShell)
+    if (includeShell) {
+      final shellFile = File(p.join(routerDir, 'bottom_shell_route.dart'));
+      final shellCode = '''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class ScaffoldWithNavBar extends StatelessWidget {
+  const ScaffoldWithNavBar({
+    required this.navigationShell,
+    required this.tabs,
+    super.key,
+  });
+
+  final StatefulNavigationShell navigationShell;
+  final List<BottomNavigationBarItem> tabs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: BottomNavigationBar(
+        items: tabs,
+        currentIndex: navigationShell.currentIndex,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == navigationShell.currentIndex) {
+            navigationShell.goBranch(index, initialLocation: true);
+          } else {
+            navigationShell.goBranch(index);
+          }
+        },
+      ),
+    );
+  }
+}
+''';
+      shellFile.writeAsStringSync(shellCode);
+    }
+
+    // 4. app_router.dart
+    final routerFile = File(p.join(routerDir, 'app_router.dart'));
+    final code = includeShell
+        ? '''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'app_routes.dart';
+import 'route_functions.dart';
+import 'bottom_shell_route.dart';
+${homeImport.isNotEmpty ? '$homeImport\n' : ''}
+final tabs = const <BottomNavigationBarItem>[
+  BottomNavigationBarItem(
+    icon: Icon(Icons.home_outlined),
+    activeIcon: Icon(Icons.home),
+    label: 'Home',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline),
+    activeIcon: Icon(Icons.person),
+    label: 'Profile',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.settings_outlined),
+    activeIcon: Icon(Icons.settings),
+    label: 'Settings',
+  ),
+];
+
+class AppRouter {
+  static final GoRouter router = GoRouter(
+    navigatorKey: navigatorKey,
+    initialLocation: AppRoutes.home,
+    routes: [
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ScaffoldWithNavBar(
+            navigationShell: navigationShell,
+            tabs: tabs,
+          );
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => $homeWidget,
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const Scaffold(
+                  body: Center(child: Text('Profile Page')),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                builder: (context, state) => const Scaffold(
+                  body: Center(child: Text('Settings Page')),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.details,
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Details Page')),
+        ),
+      ),
+    ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(child: Text('Error: \${state.error}')),
+    ),
+  );
+}
+'''
+        : '''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'app_routes.dart';
+import 'route_functions.dart';
 ${homeImport.isNotEmpty ? '$homeImport\n' : ''}
 class AppRouter {
-  static const String home = '/';
-  static const String details = '/details';
-
   static final GoRouter router = GoRouter(
-    initialLocation: home,
+    navigatorKey: navigatorKey,
+    initialLocation: AppRoutes.home,
     routes: [
       GoRoute(
-        path: home,
+        path: AppRoutes.home,
         builder: (context, state) => $homeWidget,
       ),
       GoRoute(
-        path: details,
+        path: AppRoutes.details,
         builder: (context, state) => const Scaffold(
           body: Center(child: Text('Details Page')),
         ),

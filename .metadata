@@ -9,5 +9,5 @@ version:
 
 project_type: package
 archkit:
-  architecture: MVVM
-  state_management: Riverpod
+  architecture: Clean
+  state_management: Bloc

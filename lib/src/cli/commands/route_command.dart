@@ -43,6 +43,11 @@ class RouteCommand extends Command<int> {
         'router',
         abbr: 'r',
         help: 'Route system alias for --type',
+      )
+      ..addFlag(
+        'shell',
+        help: 'Include StatefulShellRoute (Bottom Navigation Bar shell)',
+        defaultsTo: true,
       );
   }
 
@@ -79,13 +84,28 @@ class RouteCommand extends Command<int> {
       selectedRouter = routerChoices[routerIndex];
     }
 
-    logger.info('${'Route System'.padRight(18)}: $selectedRouter\n');
+    logger.info('${'Route System'.padRight(18)}: $selectedRouter');
+
+    bool includeShell = true;
+    if (selectedRouter.toLowerCase().contains('go')) {
+      if (argResults?.wasParsed('shell') == true) {
+        includeShell = argResults!['shell'] as bool;
+      } else {
+        includeShell = Confirm(
+          prompt: 'Include StatefulShellRoute (Bottom Navigation Bar shell)?',
+          defaultValue: true,
+        ).interact();
+      }
+      logger.info('${'Stateful Shell'.padRight(18)}: ${includeShell ? 'Enabled' : 'Disabled'}\n');
+    } else {
+      logger.info('');
+    }
 
     final projectPath = Directory.current.path;
     final progress =
         logger.progress('Setting up route system ($selectedRouter)...');
 
-    await _routeGenerator.generate(projectPath, selectedRouter);
+    await _routeGenerator.generate(projectPath, selectedRouter, includeShell: includeShell);
     await _pubspecModifier.addRouterDependencies(projectPath, selectedRouter);
 
     final savedConfig = _metadataConfigService.readConfig(projectPath);

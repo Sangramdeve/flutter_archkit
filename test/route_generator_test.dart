@@ -65,23 +65,36 @@ dependencies:
     expect(mainContent, contains('routerDelegate: _routerDelegate'));
   });
 
-  test('generates Go Router setup and adds pubspec dependencies correctly', () async {
+  test('generates Go Router setup with StatefulShellRoute correctly', () async {
     final generator = RouteGenerator();
     final pubspecModifier = PubspecModifier();
 
-    await generator.generate(tempDir.path, 'Go Router');
+    await generator.generate(tempDir.path, 'Go Router', includeShell: true);
     await pubspecModifier.addRouterDependencies(tempDir.path, 'Go Router');
 
     final routerFile = File(p.join(tempDir.path, 'lib', 'core', 'router', 'app_router.dart'));
+    final routesFile = File(p.join(tempDir.path, 'lib', 'core', 'router', 'app_routes.dart'));
+    final functionsFile = File(p.join(tempDir.path, 'lib', 'core', 'router', 'route_functions.dart'));
+    final shellFile = File(p.join(tempDir.path, 'lib', 'core', 'router', 'bottom_shell_route.dart'));
     final mainFile = File(p.join(tempDir.path, 'lib', 'main.dart'));
     final pubspecFile = File(p.join(tempDir.path, 'pubspec.yaml'));
 
     expect(routerFile.existsSync(), isTrue);
+    expect(routesFile.existsSync(), isTrue);
+    expect(functionsFile.existsSync(), isTrue);
+    expect(shellFile.existsSync(), isTrue);
     expect(mainFile.existsSync(), isTrue);
 
     final routerContent = routerFile.readAsStringSync();
     expect(routerContent, contains('package:go_router/go_router.dart'));
-    expect(routerContent, contains('GoRouter'));
+    expect(routerContent, contains('StatefulShellRoute.indexedStack'));
+
+    final functionsContent = functionsFile.readAsStringSync();
+    expect(functionsContent, contains('clearAndGo'));
+    expect(functionsContent, contains('pushNamed'));
+
+    final shellContent = shellFile.readAsStringSync();
+    expect(shellContent, contains('ScaffoldWithNavBar'));
 
     final mainContent = mainFile.readAsStringSync();
     expect(mainContent, contains('routerConfig: AppRouter.router'));

@@ -43,6 +43,7 @@ dependencies:
     final pubspecModifier = PubspecModifier();
 
     await generator.generate(config, tempDir.path, featureName: 'auth');
+    await pubspecModifier.addDependencies(tempDir.path, config.stateManagement);
     await pubspecModifier.addDIDependencies(tempDir.path);
 
     final dsFile = File(p.join(tempDir.path, 'lib', 'features', 'auth', 'data',
