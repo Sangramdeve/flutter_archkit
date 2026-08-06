@@ -174,4 +174,30 @@ class PubspecModifier {
 
     pubspecFile.writeAsStringSync(content);
   }
+
+  Future<void> addNetworkDependencies(String projectPath) async {
+    final pubspecFile = File(p.join(projectPath, 'pubspec.yaml'));
+    if (!pubspecFile.existsSync()) return;
+
+    var content = pubspecFile.readAsStringSync();
+    final depsMap = <String, String>{
+      'dio': '^5.4.3',
+    };
+
+    var lines = content.split('\n');
+    var newLines = <String>[];
+
+    for (var line in lines) {
+      newLines.add(line);
+      if (line.trim() == 'dependencies:') {
+        for (var entry in depsMap.entries) {
+          if (!content.contains('${entry.key}:')) {
+            newLines.add('  ${entry.key}: ${entry.value}');
+          }
+        }
+      }
+    }
+    content = newLines.join('\n');
+    pubspecFile.writeAsStringSync(content);
+  }
 }
