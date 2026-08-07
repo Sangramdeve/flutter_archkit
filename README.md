@@ -3,7 +3,7 @@
 [![pub package](https://img.shields.io/pub/v/flutter_archkit.svg)](https://pub.dev/packages/flutter_archkit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive Flutter Architecture CLI generator and multi-flavor configuration tool. `flutter_archkit` automates scaffolding Flutter projects with Clean, MVVM, or MVC architecture, state management (Bloc, Cubit, Riverpod, Provider, GetX), modular feature generators, and multi-flavor environment configurations.
+A comprehensive Flutter Architecture CLI generator and multi-flavor configuration tool. `flutter_archkit` automates scaffolding Flutter projects with Clean, MVVM, or MVC architecture, state management (Bloc, Cubit, Riverpod, Provider, GetX), modular feature generators, routing setup, network layer generation, and multi-flavor environment configurations.
 
 ---
 
@@ -11,7 +11,9 @@ A comprehensive Flutter Architecture CLI generator and multi-flavor configuratio
 
 - 🏗️ **Interactive Project Generator (`archkit create`)**: Scaffolds complete Flutter apps with interactive CLI prompts for Architecture, State Management, Organization ID, and Target Platforms.
 - ⚡ **Feature Module Generator (`archkit feature <name>` / `archkit -f <name>`)**: Instantly generates feature modules (`auth`, `profile`, `home`, etc.) matching your project's architecture.
-- 🔄 **Smart Metadata Auto-Detection**: Stores selected settings in `.metadata` so feature generation works without requiring command flags.
+- 🛣️ **Route System Setup (`archkit route` / `archkit r`)**: Scaffolds routing configurations with support for Navigator 1.0, Navigator 2.0, Go Router (with optional `StatefulShellRoute` bottom navigation), Auto Route, and GetX Routing.
+- 🌐 **Network Layer Generator (`archkit network` / `archkit n`)**: Scaffolds production-ready Dio network layer with generic `ApiResponse<T>`, custom `ApiException`, typed interfaces, logger/auth interceptors, and utility `typedefs`.
+- 🔄 **Smart Metadata Auto-Detection**: Stores selected project configuration in `.metadata` so features and routes integrate seamlessly without requiring command flags.
 - 📂 **Modular Template Engine**: Clean templates for Clean Architecture (data, domain, presentation, di), MVVM (models, services, viewmodels, views), and MVC (models, controllers, views).
 - 🤖 **Android Flavor Setup**: Automatically configures `productFlavors` and `applicationId` in `android/app/flavor.gradle.kts` and links with `build.gradle.kts`.
 - 🍎 **iOS Flavor Setup**: Generates flavor `.xcconfig` files, CocoaPods target dependencies (`#include? Pods-Runner`), shared `.xcscheme` schemes, patches `Info.plist`, updates Xcode `project.pbxproj` build configurations, and sets `IPHONEOS_DEPLOYMENT_TARGET = 16.0`.
@@ -32,7 +34,7 @@ Or add it to your project `pubspec.yaml` under `dev_dependencies`:
 
 ```yaml
 dev_dependencies:
-  flutter_archkit: ^0.0.3
+  flutter_archkit: ^0.1.0
 ```
 
 ---
@@ -78,7 +80,72 @@ archkit -f auth
 
 ---
 
-### 3. Multi-Flavor Setup (`setup_flavor`)
+### 3. Setting Up Route System (`archkit route` / `archkit r`)
+
+Set up a robust routing system tailored to your preferred router package:
+
+```bash
+archkit route
+```
+
+or use the alias:
+
+```bash
+archkit r
+```
+
+**Interactive Prompts:**
+- **Select Route System**:
+  - `Navigator 1.0` (Standard Flutter MaterialPageRoute)
+  - `Navigator 2.0` (Declarative RouterDelegate & RouteInformationParser)
+  - `Go Router` (Supports `--shell` flag for `StatefulShellRoute` bottom navigation)
+  - `Auto Route` (Strongly-typed code-generated routes)
+  - `GetX Routing` (GetMaterialApp & GetPage routes)
+
+**CLI Command Flags:**
+```bash
+# Non-interactive Go Router setup with Stateful Shell Navigation
+archkit route --type "Go Router" --shell
+
+# Auto Route setup
+archkit route -t auto_route
+
+# GetX Routing setup
+archkit route -t getx
+```
+
+*Note: Running `archkit route` automatically updates `pubspec.yaml` with the required router dependencies (e.g. `go_router`, `auto_route`, `get`) and persists the router choice in `.metadata`.*
+
+---
+
+### 4. Scaffolding Network Layer (`archkit network` / `archkit n`)
+
+Generate a production-grade Dio HTTP client architecture:
+
+```bash
+archkit network
+```
+
+or use the alias:
+
+```bash
+archkit n
+```
+
+**CLI Command Flags:**
+```bash
+# Specify target directory path
+archkit network --path ./my_project
+
+# Force overwrite existing network files
+archkit network --override
+```
+
+*Note: Running `archkit network` automatically adds `dio: ^5.4.3` to your project's `pubspec.yaml`.*
+
+---
+
+### 5. Multi-Flavor Setup (`setup_flavor`)
 
 Generate a sample `flavor.yaml` automatically:
 
@@ -151,6 +218,32 @@ lib/features/auth/
     │   └── auth_state.dart
     └── page/
         └── auth_page.dart
+```
+
+### Route System Structure (`lib/core/router/`)
+```text
+lib/core/router/
+├── app_router.dart           # Central router definition (GoRouter / RouterDelegate / AppPages)
+├── app_routes.dart           # Route name string constants
+├── route_functions.dart      # Navigation helper utilities (push, pop, clearAndGo)
+└── bottom_shell_route.dart   # StatefulShellRoute bottom navbar shell widget (Go Router)
+```
+
+### Network Layer Structure (`lib/core/`)
+```text
+lib/core/
+├── network/
+│   ├── api_exception.dart             # Typed network exception handling
+│   ├── api_interface.dart             # Abstract API client contract interface
+│   ├── dio.dart                       # Configured Dio HTTP client factory instance
+│   ├── dio_network.dart               # Concrete Dio HTTP request handler
+│   ├── dio_services.dart              # Base network service class
+│   └── interceptors/
+│       ├── api_interceptor.dart       # Auth token & header interceptor
+│       └── logging.dart               # HTTP request/response logger interceptor
+└── util/
+    ├── api_response.dart              # Generic ApiResponse<T> state wrapper
+    └── typedefs.dart                  # Utility Dart typedefs (JSON, Callbacks)
 ```
 
 ### MVVM Architecture (`lib/`)

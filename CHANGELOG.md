@@ -1,3 +1,14 @@
+## 0.1.0
+
+* **Route Setup Generator (`archkit route` / `archkit r` / `archkit setup-route`)**:
+  * Added automated routing scaffolding supporting 5 router engines: Navigator 1.0, Navigator 2.0, Go Router, Auto Route, and GetX Routing.
+  * Added support for `StatefulShellRoute` (bottom navigation shell) for Go Router.
+  * Automated `pubspec.yaml` dependency injection (`go_router`, `auto_route`, `get`, etc.) and `.metadata` configuration persistence.
+* **Network Generator (`archkit network` / `archkit n` / `archkit net`)**:
+  * Added production-ready Dio network layer generator (`lib/core/network/` & `lib/core/util/`).
+  * Scaffolds `ApiResponse<T>` generic wrapper, custom `ApiException`, typed `ApiInterface`, `DioServices`, `DioNetwork`, custom interceptors (`ApiInterceptor`, `LoggingInterceptor`), and `typedefs.dart`.
+  * Automatically adds `dio: ^5.4.3` to project `pubspec.yaml`.
+
 ## 0.0.3
 
 * Updated `flavor.yaml` schema with structured `app.name`, `app.baseUrl`, `android.applicationId`, and `ios.bundleId` definitions.
